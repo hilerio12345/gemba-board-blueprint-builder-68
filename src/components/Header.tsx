@@ -1,5 +1,12 @@
 
 import { Card } from "@/components/ui/card";
+import { 
+  Popover, 
+  PopoverTrigger, 
+  PopoverContent 
+} from "@/components/ui/popover";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Header = () => {
   return (

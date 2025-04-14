@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Select, 
@@ -15,12 +16,21 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { 
+  Popover, 
+  PopoverTrigger, 
+  PopoverContent 
+} from "@/components/ui/popover";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import MetricParametersDialog, { MetricParameter } from "./MetricParametersDialog";
+import MetricsLineGraph from "./MetricsLineGraph";
 
 interface Metric {
   id: string;
   category: string;
   goal: string;
+  value: number;
   status: {
     monday: string;
     tuesday: string;
@@ -40,6 +50,7 @@ const MetricsTable = () => {
       id: "1",
       category: "AVAILABILITY",
       goal: "Goal: 100%",
+      value: 98,
       status: {
         monday: "green",
         tuesday: "green",
@@ -56,6 +67,7 @@ const MetricsTable = () => {
       id: "2",
       category: "DELIVERY",
       goal: "Goal: 4",
+      value: 3,
       status: {
         monday: "green",
         tuesday: "green",
@@ -72,6 +84,7 @@ const MetricsTable = () => {
       id: "3",
       category: "QUALITY",
       goal: "Goal: 75%",
+      value: 78,
       status: {
         monday: "green",
         tuesday: "yellow",
@@ -88,6 +101,7 @@ const MetricsTable = () => {
       id: "4",
       category: "COST",
       goal: "Goal: <5%",
+      value: 4.2,
       status: {
         monday: "yellow",
         tuesday: "green",
@@ -104,6 +118,7 @@ const MetricsTable = () => {
       id: "5",
       category: "PEOPLE",
       goal: "Goal: 95%",
+      value: 92,
       status: {
         monday: "green",
         tuesday: "green",
@@ -119,6 +134,27 @@ const MetricsTable = () => {
   ];
 
   const [metrics, setMetrics] = useState<Metric[]>(initialMetrics);
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
+  
+  // Generate trend data for line graphs
+  const generateTrendData = (metricId: string) => {
+    const metric = metrics.find(m => m.id === metricId);
+    if (!metric) return [];
+    
+    const statusToValue = {
+      green: metric.value * 1.05,
+      yellow: metric.value * 0.9,
+      red: metric.value * 0.75
+    };
+    
+    return [
+      { day: "Mon", value: statusToValue[metric.status.monday as keyof typeof statusToValue] || 0 },
+      { day: "Tue", value: statusToValue[metric.status.tuesday as keyof typeof statusToValue] || 0 },
+      { day: "Wed", value: statusToValue[metric.status.wednesday as keyof typeof statusToValue] || 0 },
+      { day: "Thu", value: statusToValue[metric.status.thursday as keyof typeof statusToValue] || 0 },
+      { day: "Fri", value: statusToValue[metric.status.friday as keyof typeof statusToValue] || 0 },
+    ];
+  };
 
   const handleStatusChange = (metricId: string, day: keyof Metric['status'], value: string) => {
     setMetrics(metrics.map(metric => {
@@ -159,6 +195,26 @@ const MetricsTable = () => {
       };
     }));
   };
+  
+  const handleValueChange = (metricId: string, increment: boolean) => {
+    setMetrics(metrics.map(metric => {
+      if (metric.id === metricId) {
+        let newValue = increment ? metric.value + 1 : metric.value - 1;
+        // Prevent negative values
+        if (newValue < 0) newValue = 0;
+        
+        return {
+          ...metric,
+          value: newValue
+        };
+      }
+      return metric;
+    }));
+  };
+
+  const toggleExpanded = (metricId: string) => {
+    setExpandedMetric(expandedMetric === metricId ? null : metricId);
+  };
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
@@ -169,10 +225,42 @@ const MetricsTable = () => {
     }
   };
   
+  const getMetricColor = (category: string) => {
+    switch(category) {
+      case "AVAILABILITY": return "#0EA5E9"; // blue
+      case "DELIVERY": return "#8B5CF6"; // purple
+      case "QUALITY": return "#10B981"; // green
+      case "COST": return "#F97316"; // orange
+      case "PEOPLE": return "#6E59A5"; // dark purple
+      default: return "#8E9196"; // gray
+    }
+  };
+  
   const getCategoryHeader = (category: string, metric: Metric) => {
     return (
       <div className="flex flex-col">
-        <span className="font-bold">{category}</span>
+        <div className="flex items-center justify-between">
+          <span className="font-bold">{category}</span>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => handleValueChange(metric.id, false)}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium">{metric.value}</span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => handleValueChange(metric.id, true)}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         {metric.greenThreshold && (
           <div className="text-xs text-gray-500 mt-2">
             <div className="flex items-center">
@@ -189,6 +277,14 @@ const MetricsTable = () => {
             </div>
           </div>
         )}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 text-xs h-6"
+          onClick={() => toggleExpanded(metric.id)}
+        >
+          {expandedMetric === metric.id ? "Hide Graph" : "Show Graph"}
+        </Button>
       </div>
     );
   };
@@ -221,96 +317,109 @@ const MetricsTable = () => {
         </TableHeader>
         <TableBody>
           {metrics.map((metric) => (
-            <TableRow key={metric.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium border-r bg-gray-50">
-                {getCategoryHeader(metric.category, metric)}
-                <div className="text-xs text-gray-500 mt-1">{metric.goal}</div>
-              </TableCell>
-              
-              <TableCell className="text-center border-r border-gray-200 p-1">
-                <Select 
-                  value={metric.status.monday} 
-                  onValueChange={(value) => handleStatusChange(metric.id, 'monday', value)}
-                >
-                  <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.monday)}`}>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="green">Green</SelectItem>
-                    <SelectItem value="yellow">Yellow</SelectItem>
-                    <SelectItem value="red">Red</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-center border-r border-gray-200 p-1">
-                <Select 
-                  value={metric.status.tuesday} 
-                  onValueChange={(value) => handleStatusChange(metric.id, 'tuesday', value)}
-                >
-                  <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.tuesday)}`}>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="green">Green</SelectItem>
-                    <SelectItem value="yellow">Yellow</SelectItem>
-                    <SelectItem value="red">Red</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-center border-r border-gray-200 p-1">
-                <Select 
-                  value={metric.status.wednesday} 
-                  onValueChange={(value) => handleStatusChange(metric.id, 'wednesday', value)}
-                >
-                  <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.wednesday)}`}>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="green">Green</SelectItem>
-                    <SelectItem value="yellow">Yellow</SelectItem>
-                    <SelectItem value="red">Red</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-center border-r border-gray-200 p-1">
-                <Select 
-                  value={metric.status.thursday} 
-                  onValueChange={(value) => handleStatusChange(metric.id, 'thursday', value)}
-                >
-                  <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.thursday)}`}>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="green">Green</SelectItem>
-                    <SelectItem value="yellow">Yellow</SelectItem>
-                    <SelectItem value="red">Red</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-center border-r border-gray-200 p-1">
-                <Select 
-                  value={metric.status.friday} 
-                  onValueChange={(value) => handleStatusChange(metric.id, 'friday', value)}
-                >
-                  <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.friday)}`}>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="green">Green</SelectItem>
-                    <SelectItem value="yellow">Yellow</SelectItem>
-                    <SelectItem value="red">Red</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              
-              <TableCell className="p-1">
-                <Input 
-                  value={metric.notes} 
-                  onChange={(e) => handleNotesChange(metric.id, e.target.value)} 
-                  className="h-8"
-                />
-              </TableCell>
-            </TableRow>
+            <>
+              <TableRow key={metric.id} className="hover:bg-gray-50">
+                <TableCell className="font-medium border-r bg-gray-50">
+                  {getCategoryHeader(metric.category, metric)}
+                  <div className="text-xs text-gray-500 mt-1">{metric.goal}</div>
+                </TableCell>
+                
+                <TableCell className="text-center border-r border-gray-200 p-1">
+                  <Select 
+                    value={metric.status.monday} 
+                    onValueChange={(value) => handleStatusChange(metric.id, 'monday', value)}
+                  >
+                    <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.monday)}`}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-center border-r border-gray-200 p-1">
+                  <Select 
+                    value={metric.status.tuesday} 
+                    onValueChange={(value) => handleStatusChange(metric.id, 'tuesday', value)}
+                  >
+                    <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.tuesday)}`}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-center border-r border-gray-200 p-1">
+                  <Select 
+                    value={metric.status.wednesday} 
+                    onValueChange={(value) => handleStatusChange(metric.id, 'wednesday', value)}
+                  >
+                    <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.wednesday)}`}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-center border-r border-gray-200 p-1">
+                  <Select 
+                    value={metric.status.thursday} 
+                    onValueChange={(value) => handleStatusChange(metric.id, 'thursday', value)}
+                  >
+                    <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.thursday)}`}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-center border-r border-gray-200 p-1">
+                  <Select 
+                    value={metric.status.friday} 
+                    onValueChange={(value) => handleStatusChange(metric.id, 'friday', value)}
+                  >
+                    <SelectTrigger className={`w-full h-8 text-white font-medium ${getStatusColor(metric.status.friday)}`}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                
+                <TableCell className="p-1">
+                  <Input 
+                    value={metric.notes} 
+                    onChange={(e) => handleNotesChange(metric.id, e.target.value)} 
+                    className="h-8"
+                  />
+                </TableCell>
+              </TableRow>
+              {expandedMetric === metric.id && (
+                <TableRow>
+                  <TableCell colSpan={7} className="p-2 bg-gray-50">
+                    <MetricsLineGraph 
+                      category={metric.category}
+                      data={generateTrendData(metric.id)}
+                      color={getMetricColor(metric.category)}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
+            </>
           ))}
         </TableBody>
       </Table>
