@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -22,39 +21,54 @@ interface MetricsLineGraphProps {
 }
 
 const MetricsLineGraph = ({ category, data, color }: MetricsLineGraphProps) => {
+  // Ensure we have valid data by providing a fallback
+  const safeData = data && data.length > 0 ? data : [
+    { day: "Mon", value: 0 },
+    { day: "Tue", value: 0 },
+    { day: "Wed", value: 0 },
+    { day: "Thu", value: 0 },
+    { day: "Fri", value: 0 },
+  ];
+
   return (
-    <div className="h-48 mb-4">
+    <div className="h-64 w-full">
       <h3 className="text-sm font-medium mb-2">{category} Trend</h3>
-      <ChartContainer
-        config={{
-          line: { color },
-          tooltip: {},
-        }}
-        className="h-40"
-      >
-        <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="day" />
-          <YAxis />
-          <ChartTooltip
-            content={({ active, payload }) => (
-              <ChartTooltipContent
-                active={active}
-                payload={payload}
-                labelFormatter={(value) => `Day: ${value}`}
-              />
-            )}
-          />
-          <Line 
-            type="monotone" 
-            dataKey="value" 
-            stroke={color}
-            strokeWidth={2}
-            activeDot={{ r: 8 }}
-            name="Value"
-          />
-        </LineChart>
-      </ChartContainer>
+      <div className="h-56 w-full border rounded p-2 bg-white">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart 
+            data={safeData} 
+            margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="day" />
+            <YAxis />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="p-2 bg-white border rounded shadow-sm">
+                      <p className="font-medium">{`Day: ${label}`}</p>
+                      <p className="text-sm" style={{ color }}>
+                        {`Value: ${payload[0].value}`}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="value" 
+              stroke={color}
+              strokeWidth={2}
+              activeDot={{ r: 6 }}
+              name="Value"
+              isAnimationActive={true}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

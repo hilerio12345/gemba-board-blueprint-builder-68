@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Select, 
@@ -136,7 +135,6 @@ const MetricsTable = () => {
   const [metrics, setMetrics] = useState<Metric[]>(initialMetrics);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   
-  // Generate trend data for line graphs
   const generateTrendData = (metricId: string) => {
     const metric = metrics.find(m => m.id === metricId);
     if (!metric) return [];
@@ -148,11 +146,11 @@ const MetricsTable = () => {
     };
     
     return [
-      { day: "Mon", value: statusToValue[metric.status.monday as keyof typeof statusToValue] || 0 },
-      { day: "Tue", value: statusToValue[metric.status.tuesday as keyof typeof statusToValue] || 0 },
-      { day: "Wed", value: statusToValue[metric.status.wednesday as keyof typeof statusToValue] || 0 },
-      { day: "Thu", value: statusToValue[metric.status.thursday as keyof typeof statusToValue] || 0 },
-      { day: "Fri", value: statusToValue[metric.status.friday as keyof typeof statusToValue] || 0 },
+      { day: "Mon", value: statusToValue[metric.status.monday as keyof typeof statusToValue] || metric.value },
+      { day: "Tue", value: statusToValue[metric.status.tuesday as keyof typeof statusToValue] || metric.value },
+      { day: "Wed", value: statusToValue[metric.status.wednesday as keyof typeof statusToValue] || metric.value },
+      { day: "Thu", value: statusToValue[metric.status.thursday as keyof typeof statusToValue] || metric.value },
+      { day: "Fri", value: statusToValue[metric.status.friday as keyof typeof statusToValue] || metric.value },
     ];
   };
 
@@ -200,7 +198,6 @@ const MetricsTable = () => {
     setMetrics(metrics.map(metric => {
       if (metric.id === metricId) {
         let newValue = increment ? metric.value + 1 : metric.value - 1;
-        // Prevent negative values
         if (newValue < 0) newValue = 0;
         
         return {
@@ -214,6 +211,9 @@ const MetricsTable = () => {
 
   const toggleExpanded = (metricId: string) => {
     setExpandedMetric(expandedMetric === metricId ? null : metricId);
+    setTimeout(() => {
+      console.log("Graph toggled for metric:", metricId);
+    }, 100);
   };
 
   const getStatusColor = (status: string) => {
@@ -317,8 +317,8 @@ const MetricsTable = () => {
         </TableHeader>
         <TableBody>
           {metrics.map((metric) => (
-            <>
-              <TableRow key={metric.id} className="hover:bg-gray-50">
+            <React.Fragment key={metric.id}>
+              <TableRow className="hover:bg-gray-50">
                 <TableCell className="font-medium border-r bg-gray-50">
                   {getCategoryHeader(metric.category, metric)}
                   <div className="text-xs text-gray-500 mt-1">{metric.goal}</div>
@@ -410,7 +410,7 @@ const MetricsTable = () => {
               </TableRow>
               {expandedMetric === metric.id && (
                 <TableRow>
-                  <TableCell colSpan={7} className="p-2 bg-gray-50">
+                  <TableCell colSpan={7} className="p-4 bg-gray-50">
                     <MetricsLineGraph 
                       category={metric.category}
                       data={generateTrendData(metric.id)}
@@ -419,7 +419,7 @@ const MetricsTable = () => {
                   </TableCell>
                 </TableRow>
               )}
-            </>
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
