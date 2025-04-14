@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Select, 
@@ -8,7 +7,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { 
   Table, 
   TableBody, 
@@ -17,6 +15,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import MetricParametersDialog, { MetricParameter } from "./MetricParametersDialog";
 
 interface Metric {
   id: string;
@@ -30,6 +29,9 @@ interface Metric {
     friday: string;
   };
   notes: string;
+  greenThreshold?: string;
+  yellowThreshold?: string;
+  redThreshold?: string;
 }
 
 const MetricsTable = () => {
@@ -45,7 +47,10 @@ const MetricsTable = () => {
         thursday: "green",
         friday: "green",
       },
-      notes: "Systems available throughout the week"
+      notes: "Systems available throughout the week",
+      greenThreshold: "≥ 98%",
+      yellowThreshold: "90-97%",
+      redThreshold: "< 90%"
     },
     {
       id: "2",
@@ -58,7 +63,10 @@ const MetricsTable = () => {
         thursday: "red",
         friday: "yellow",
       },
-      notes: "4 DVs/wk | 4 DVs | = 4 total"
+      notes: "4 DVs/wk | 4 DVs | = 4 total",
+      greenThreshold: "≥ 4",
+      yellowThreshold: "3",
+      redThreshold: "< 3"
     },
     {
       id: "3",
@@ -71,7 +79,10 @@ const MetricsTable = () => {
         thursday: "green",
         friday: "green",
       },
-      notes: "3rd prty PV > Target"
+      notes: "3rd prty PV > Target",
+      greenThreshold: "≥ 75%",
+      yellowThreshold: "65-74%",
+      redThreshold: "< 65%"
     },
     {
       id: "4",
@@ -84,7 +95,10 @@ const MetricsTable = () => {
         thursday: "green",
         friday: "red",
       },
-      notes: "Overtime % above target on Friday"
+      notes: "Overtime % above target on Friday",
+      greenThreshold: "< 5%",
+      yellowThreshold: "5-7%",
+      redThreshold: "> 7%"
     },
     {
       id: "5",
@@ -97,7 +111,10 @@ const MetricsTable = () => {
         thursday: "green",
         friday: "yellow",
       },
-      notes: "Training compliance on track"
+      notes: "Training compliance on track",
+      greenThreshold: "≥ 95%",
+      yellowThreshold: "85-94%",
+      redThreshold: "< 85%"
     },
   ];
 
@@ -130,6 +147,19 @@ const MetricsTable = () => {
     }));
   };
 
+  const handleParametersUpdate = (parameters: MetricParameter[]) => {
+    setMetrics(metrics.map((metric, index) => {
+      const parameter = parameters[index];
+      return {
+        ...metric,
+        goal: parameter.goal,
+        greenThreshold: parameter.greenThreshold,
+        yellowThreshold: parameter.yellowThreshold,
+        redThreshold: parameter.redThreshold
+      };
+    }));
+  };
+
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
       case 'green': return 'bg-green-500 hover:bg-green-600';
@@ -139,16 +169,44 @@ const MetricsTable = () => {
     }
   };
   
-  const getCategoryHeader = (category: string) => {
+  const getCategoryHeader = (category: string, metric: Metric) => {
     return (
       <div className="flex flex-col">
         <span className="font-bold">{category}</span>
+        {metric.greenThreshold && (
+          <div className="text-xs text-gray-500 mt-2">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-green-500 inline-block mr-1"></span>
+              <span>{metric.greenThreshold}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block mr-1"></span>
+              <span>{metric.yellowThreshold}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-red-500 inline-block mr-1"></span>
+              <span>{metric.redThreshold}</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div className="overflow-x-auto">
+      <div className="mb-4 flex justify-end">
+        <MetricParametersDialog 
+          initialParameters={metrics.map(metric => ({
+            category: metric.category,
+            goal: metric.goal,
+            greenThreshold: metric.greenThreshold,
+            yellowThreshold: metric.yellowThreshold,
+            redThreshold: metric.redThreshold
+          }))}
+          onParametersUpdate={handleParametersUpdate}
+        />
+      </div>
       <Table className="w-full">
         <TableHeader>
           <TableRow className="bg-gray-100">
@@ -165,9 +223,10 @@ const MetricsTable = () => {
           {metrics.map((metric) => (
             <TableRow key={metric.id} className="hover:bg-gray-50">
               <TableCell className="font-medium border-r bg-gray-50">
-                {getCategoryHeader(metric.category)}
+                {getCategoryHeader(metric.category, metric)}
                 <div className="text-xs text-gray-500 mt-1">{metric.goal}</div>
               </TableCell>
+              
               <TableCell className="text-center border-r border-gray-200 p-1">
                 <Select 
                   value={metric.status.monday} 
@@ -243,6 +302,7 @@ const MetricsTable = () => {
                   </SelectContent>
                 </Select>
               </TableCell>
+              
               <TableCell className="p-1">
                 <Input 
                   value={metric.notes} 

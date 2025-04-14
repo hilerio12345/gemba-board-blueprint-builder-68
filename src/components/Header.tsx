@@ -19,6 +19,9 @@ const Header = () => {
               <h1 className="text-xl font-bold">Gemba Board</h1>
               <p className="text-sm opacity-75">Lean Management System</p>
             </div>
+            <div className="ml-4 px-3 py-1 bg-blue-700 rounded-md">
+              <span className="font-semibold">TIER 1</span>
+            </div>
           </div>
           
           <div className="flex flex-col text-right">
