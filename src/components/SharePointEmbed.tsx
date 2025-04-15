@@ -10,8 +10,8 @@ const SharePointEmbed = () => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   
-  // This URL should be replaced with your actual deployed URL
-  const deployedUrl = window.location.origin;
+  // Replace with your actual deployed URL
+  const deployedUrl = "https://your-gemba-board.lovable.app"; // Replace with your actual deployed URL
   
   // Generate the iframe embed code
   const iframeCode = `<iframe src="${deployedUrl}" width="100%" height="800" frameborder="0" allowfullscreen></iframe>`;
