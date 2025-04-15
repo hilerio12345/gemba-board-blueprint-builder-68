@@ -1,14 +1,23 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { 
   Popover, 
   PopoverTrigger, 
   PopoverContent 
 } from "@/components/ui/popover";
-import { Settings } from "lucide-react";
+import { Settings, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const Header = () => {
+  const [lineOfProduction, setLineOfProduction] = useState("STANDARD DD214s");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleSave = () => {
+    setIsEditing(false);
+  };
+
   return (
     <header className="bg-[#1a3a5f] text-white p-4 shadow-md mb-4 sticky top-0 z-50">
       <div className="container mx-auto">
@@ -32,9 +41,32 @@ const Header = () => {
           </div>
           
           <div className="flex flex-col text-right">
-            <span className="text-sm font-medium">PROGRAM BRIEFED: STANDARD DD214s</span>
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-sm font-medium">LINE OF PRODUCTION:</span>
+              {isEditing ? (
+                <Input
+                  value={lineOfProduction}
+                  onChange={(e) => setLineOfProduction(e.target.value)}
+                  className="h-7 text-sm w-44 text-black"
+                  onBlur={handleSave}
+                  onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                  autoFocus
+                />
+              ) : (
+                <div className="flex items-center">
+                  <span className="text-sm font-medium">{lineOfProduction}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-1"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
             <span className="text-sm opacity-75">BRIEFING TIME: 0830</span>
-            <span className="text-sm opacity-75 mt-1">Line Of Production: </span>
           </div>
         </div>
       </div>
