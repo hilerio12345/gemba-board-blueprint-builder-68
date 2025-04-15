@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import MetricParametersDialog from "./MetricParametersDialog";
+import MetricParametersDialog, { MetricParameter } from "./MetricParametersDialog";
 import MetricsLineGraph from "./MetricsLineGraph";
 import { useDateContext } from "../contexts/DateContext";
 import { Metric } from "../types/metrics";
