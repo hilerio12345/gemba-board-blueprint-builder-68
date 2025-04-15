@@ -34,6 +34,7 @@ const Header = () => {
           <div className="flex flex-col text-right">
             <span className="text-sm font-medium">PROGRAM BRIEFED: STANDARD DD214s</span>
             <span className="text-sm opacity-75">BRIEFING TIME: 0830</span>
+            <span className="text-sm opacity-75 mt-1">Line Of Production: </span>
           </div>
         </div>
       </div>
