@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Select, 
   SelectContent, 
@@ -17,125 +16,23 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  Popover, 
-  PopoverTrigger, 
-  PopoverContent 
-} from "@/components/ui/popover";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import MetricParametersDialog, { MetricParameter } from "./MetricParametersDialog";
+import MetricParametersDialog from "./MetricParametersDialog";
 import MetricsLineGraph from "./MetricsLineGraph";
-
-interface Metric {
-  id: string;
-  category: string;
-  goal: string;
-  value: number;
-  status: {
-    monday: string;
-    tuesday: string;
-    wednesday: string;
-    thursday: string;
-    friday: string;
-  };
-  notes: string;
-  greenThreshold?: string;
-  yellowThreshold?: string;
-  redThreshold?: string;
-}
+import { useDateContext } from "../contexts/DateContext";
+import { Metric } from "../types/metrics";
+import { getMetricsForDate, updateMetricsForDate } from "../services/metricsService";
 
 const MetricsTable = () => {
-  const initialMetrics: Metric[] = [
-    {
-      id: "1",
-      category: "AVAILABILITY",
-      goal: "Goal: 100%",
-      value: 98,
-      status: {
-        monday: "green",
-        tuesday: "green",
-        wednesday: "yellow",
-        thursday: "green",
-        friday: "green",
-      },
-      notes: "Systems available throughout the week",
-      greenThreshold: "≥ 98%",
-      yellowThreshold: "90-97%",
-      redThreshold: "< 90%"
-    },
-    {
-      id: "2",
-      category: "DELIVERY",
-      goal: "Goal: 4",
-      value: 3,
-      status: {
-        monday: "green",
-        tuesday: "green",
-        wednesday: "green",
-        thursday: "red",
-        friday: "yellow",
-      },
-      notes: "4 DVs/wk | 4 DVs | = 4 total",
-      greenThreshold: "≥ 4",
-      yellowThreshold: "3",
-      redThreshold: "< 3"
-    },
-    {
-      id: "3",
-      category: "QUALITY",
-      goal: "Goal: 75%",
-      value: 78,
-      status: {
-        monday: "green",
-        tuesday: "yellow",
-        wednesday: "yellow",
-        thursday: "green",
-        friday: "green",
-      },
-      notes: "3rd prty PV > Target",
-      greenThreshold: "≥ 75%",
-      yellowThreshold: "65-74%",
-      redThreshold: "< 65%"
-    },
-    {
-      id: "4",
-      category: "COST",
-      goal: "Goal: <5%",
-      value: 4.2,
-      status: {
-        monday: "yellow",
-        tuesday: "green",
-        wednesday: "green",
-        thursday: "green",
-        friday: "red",
-      },
-      notes: "Overtime % above target on Friday",
-      greenThreshold: "< 5%",
-      yellowThreshold: "5-7%",
-      redThreshold: "> 7%"
-    },
-    {
-      id: "5",
-      category: "PEOPLE",
-      goal: "Goal: 95%",
-      value: 92,
-      status: {
-        monday: "green",
-        tuesday: "green",
-        wednesday: "green",
-        thursday: "green",
-        friday: "yellow",
-      },
-      notes: "Training compliance on track",
-      greenThreshold: "≥ 95%",
-      yellowThreshold: "85-94%",
-      redThreshold: "< 85%"
-    },
-  ];
-
-  const [metrics, setMetrics] = useState<Metric[]>(initialMetrics);
+  const { dateKey } = useDateContext();
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   
+  useEffect(() => {
+    const loadedMetrics = getMetricsForDate(dateKey);
+    setMetrics(loadedMetrics);
+  }, [dateKey]);
+
   const generateTrendData = (metricId: string) => {
     const metric = metrics.find(m => m.id === metricId);
     if (!metric) return [];
@@ -156,7 +53,7 @@ const MetricsTable = () => {
   };
 
   const handleStatusChange = (metricId: string, day: keyof Metric['status'], value: string) => {
-    setMetrics(metrics.map(metric => {
+    const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         return {
           ...metric,
@@ -167,11 +64,14 @@ const MetricsTable = () => {
         };
       }
       return metric;
-    }));
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
   };
 
   const handleNotesChange = (metricId: string, value: string) => {
-    setMetrics(metrics.map(metric => {
+    const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         return {
           ...metric,
@@ -179,11 +79,14 @@ const MetricsTable = () => {
         };
       }
       return metric;
-    }));
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
   };
 
   const handleParametersUpdate = (parameters: MetricParameter[]) => {
-    setMetrics(metrics.map((metric, index) => {
+    const updatedMetrics = metrics.map((metric, index) => {
       const parameter = parameters[index];
       return {
         ...metric,
@@ -192,11 +95,14 @@ const MetricsTable = () => {
         yellowThreshold: parameter.yellowThreshold,
         redThreshold: parameter.redThreshold
       };
-    }));
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
   };
   
   const handleValueChange = (metricId: string, increment: boolean) => {
-    setMetrics(metrics.map(metric => {
+    const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         let newValue = increment ? metric.value + 1 : metric.value - 1;
         if (newValue < 0) newValue = 0;
@@ -207,7 +113,10 @@ const MetricsTable = () => {
         };
       }
       return metric;
-    }));
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
   };
 
   const toggleExpanded = (metricId: string) => {

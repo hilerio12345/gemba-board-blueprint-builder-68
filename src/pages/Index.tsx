@@ -1,23 +1,21 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import MetricsTable from "@/components/MetricsTable";
 import ActionItemsLog from "@/components/ActionItemsLog";
 import Header from "@/components/Header";
 import SharePointExport from "@/components/SharePointExport";
 import ExportOptions from "@/components/ExportOptions";
+import DatePicker from "@/components/DatePicker";
+import { DateProvider, useDateContext } from "@/contexts/DateContext";
+import { generateHistoricalDataIfNeeded } from "@/services/metricsService";
 
-const Index = () => {
-  const [currentDate, setCurrentDate] = useState("");
-
+const GembaContent = () => {
+  const { currentDate, setCurrentDate, formattedDate } = useDateContext();
+  
   useEffect(() => {
-    const date = new Date();
-    setCurrentDate(date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }));
+    // Generate historical data on first load
+    generateHistoricalDataIfNeeded();
   }, []);
 
   return (
@@ -25,14 +23,20 @@ const Index = () => {
       <Header />
       
       <main className="container mx-auto p-4 md:p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Tier 1 Gemba Board</h1>
-            <p className="text-sm text-gray-500">{currentDate}</p>
+            <p className="text-sm text-gray-500">{formattedDate}</p>
           </div>
-          <div className="flex gap-2">
-            <SharePointExport />
-            <ExportOptions />
+          <div className="flex flex-col md:flex-row gap-2">
+            <DatePicker 
+              date={currentDate}
+              onDateChange={setCurrentDate}
+            />
+            <div className="flex gap-2">
+              <SharePointExport />
+              <ExportOptions />
+            </div>
           </div>
         </div>
 
@@ -72,6 +76,14 @@ const Index = () => {
         </div>
       </main>
     </div>
+  );
+};
+
+const Index = () => {
+  return (
+    <DateProvider>
+      <GembaContent />
+    </DateProvider>
   );
 };
 
