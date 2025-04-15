@@ -59,7 +59,7 @@ const SharePointEmbed = () => {
           
           <TabsContent value="iframe" className="mt-4">
             <div className="relative">
-              <pre className="bg-gray-50 p-4 rounded-md overflow-auto max-h-[200px] text-sm">
+              <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] text-xs sm:text-sm break-all">
                 {iframeCode}
               </pre>
               <Button 
@@ -80,7 +80,7 @@ const SharePointEmbed = () => {
           
           <TabsContent value="sharepoint" className="mt-4">
             <div className="relative">
-              <pre className="bg-gray-50 p-4 rounded-md overflow-auto max-h-[200px] text-sm">
+              <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] text-xs sm:text-sm break-all">
                 {sharePointWebPartCode}
               </pre>
               <Button 
@@ -100,7 +100,7 @@ const SharePointEmbed = () => {
           </TabsContent>
           
           <TabsContent value="instructions" className="mt-4">
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none overflow-y-auto max-h-[300px]">
               <h3>How to Embed in SharePoint</h3>
               <ol className="list-decimal pl-5 space-y-2">
                 <li>In SharePoint, navigate to the page where you want to embed the Gemba Board</li>
