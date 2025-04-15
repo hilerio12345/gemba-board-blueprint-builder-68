@@ -14,6 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider"; 
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 
 export interface MetricParameter {
   category: string;
@@ -54,6 +63,17 @@ const MetricParametersDialog = ({
     setIsOpen(false);
   };
 
+  const getCategoryColor = (category: string) => {
+    switch(category) {
+      case "AVAILABILITY": return "bg-blue-500";
+      case "DELIVERY": return "bg-purple-500";
+      case "QUALITY": return "bg-green-500";
+      case "COST": return "bg-orange-500";
+      case "PEOPLE": return "bg-indigo-500";
+      default: return "bg-gray-500";
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -73,7 +93,10 @@ const MetricParametersDialog = ({
         <div className="grid gap-6 py-4">
           {parameters.map((parameter, index) => (
             <div key={index} className="grid gap-3">
-              <div className="font-semibold text-lg border-b pb-1">{parameter.category}</div>
+              <div className={`font-semibold text-lg border-b pb-1 flex items-center gap-2`}>
+                <span className={`w-4 h-4 rounded-full ${getCategoryColor(parameter.category)}`}></span>
+                {parameter.category}
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -115,6 +138,31 @@ const MetricParametersDialog = ({
                       onChange={(e) => handleParameterChange(index, "redThreshold", e.target.value)}
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mt-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Threshold Visualization</h4>
+                <div className="grid grid-cols-3 gap-1 mb-1">
+                  <div className="h-2 bg-red-500 rounded-l"></div>
+                  <div className="h-2 bg-yellow-400"></div>
+                  <div className="h-2 bg-green-500 rounded-r"></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Low</span>
+                  <span>Medium</span>
+                  <span>High</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-4">
+                  <p className="mb-1">
+                    <span className="font-medium">Green threshold:</span> Values {parameter.category === "COST" ? "below" : "at or above"} this level are considered good.
+                  </p>
+                  <p className="mb-1">
+                    <span className="font-medium">Yellow threshold:</span> Values in this range require attention.
+                  </p>
+                  <p>
+                    <span className="font-medium">Red threshold:</span> Values {parameter.category === "COST" ? "above" : "below"} this level indicate problems.
+                  </p>
                 </div>
               </div>
             </div>
