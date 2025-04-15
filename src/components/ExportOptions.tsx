@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import SyncSettingsDialog, { SyncSettings } from "./SyncSettingsDialog";
+import SharePointExport from "./SharePointExport";
+import SharePointEmbed from "./SharePointEmbed";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -106,6 +108,8 @@ const ExportOptions = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      
+      <SharePointEmbed />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

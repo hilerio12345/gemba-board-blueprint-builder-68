@@ -4,11 +4,10 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import MetricsTable from "@/components/MetricsTable";
 import ActionItemsLog from "@/components/ActionItemsLog";
 import Header from "@/components/Header";
-import SharePointExport from "@/components/SharePointExport";
-import ExportOptions from "@/components/ExportOptions";
 import DatePicker from "@/components/DatePicker";
 import { DateProvider, useDateContext } from "@/contexts/DateContext";
 import { generateHistoricalDataIfNeeded } from "@/services/metricsService";
+import ExportOptions from "@/components/ExportOptions";
 
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
@@ -33,8 +32,7 @@ const GembaContent = () => {
               date={currentDate}
               onDateChange={setCurrentDate}
             />
-            <div className="flex gap-2">
-              <SharePointExport />
+            <div className="flex gap-2 flex-wrap">
               <ExportOptions />
             </div>
           </div>
