@@ -1,4 +1,3 @@
-
 import { Metric } from "../types/metrics";
 
 // Sample initial metrics data
@@ -183,20 +182,13 @@ export const generateHistoricalDataIfNeeded = () => {
         };
         
         // Generate day values for each metric
-        const dayValues: Record<string, number> = {};
-        if (metric.category === "AVAILABILITY") {
-          dayValues.monday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
-          dayValues.tuesday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
-          dayValues.wednesday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
-          dayValues.thursday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
-          dayValues.friday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
-        } else {
-          dayValues.monday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
-          dayValues.tuesday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
-          dayValues.wednesday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
-          dayValues.thursday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
-          dayValues.friday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
-        }
+        const dayValues = {
+          monday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
+          tuesday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
+          wednesday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
+          thursday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
+          friday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10
+        };
         
         return {
           ...metric,
@@ -208,7 +200,7 @@ export const generateHistoricalDataIfNeeded = () => {
         };
       });
       
-      allData[pastDateKey] = variedMetrics;
+      allData[pastDateKey] = variedMetrics as Metric[];
     }
   }
   

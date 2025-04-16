@@ -22,4 +22,11 @@ export interface Metric {
     thursday: number;
     friday: number;
   };
+  dayValues?: {
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+  };
 }

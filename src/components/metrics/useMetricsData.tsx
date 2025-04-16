@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Metric } from "../../types/metrics";
 import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsService";
@@ -15,12 +14,28 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     setMetrics(loadedMetrics);
   }, [dateKey]);
 
+  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY") {
+      return getDayAvailability(metric, day);
+    }
+    
+    if (metric.dayValues && metric.dayValues[day] !== undefined) {
+      return metric.dayValues[day];
+    }
+    
+    const statusToValue = {
+      green: metric.value * 1.05,
+      yellow: metric.value * 0.9,
+      red: metric.value * 0.75
+    };
+    
+    return statusToValue[metric.status[day] as keyof typeof statusToValue] || metric.value;
+  };
+
   const generateTrendData = (metricId: string) => {
     const metric = metrics.find(m => m.id === metricId);
     if (!metric) return [];
     
-    // Generate trend data based on the actual daily values
-    // or fallback to status-based values if actual values aren't available
     return [
       { 
         day: "Mon", 
@@ -43,27 +58,6 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
         value: getDayValue(metric, 'friday')
       },
     ];
-  };
-  
-  // Helper function to get the actual value for a day or derive one from status
-  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
-    if (metric.category === "AVAILABILITY" && metric.availability && metric.availability[day] !== undefined) {
-      return metric.availability[day];
-    }
-    
-    // For other metrics, check if there's a day value
-    if (metric.dayValues && metric.dayValues[day] !== undefined) {
-      return metric.dayValues[day];
-    }
-    
-    // Fallback to status-based estimation
-    const statusToValue = {
-      green: metric.value * 1.05,
-      yellow: metric.value * 0.9,
-      red: metric.value * 0.75
-    };
-    
-    return statusToValue[metric.status[day] as keyof typeof statusToValue] || metric.value;
   };
 
   const handleStatusChange = (metricId: string, day: keyof Metric['status'], value: string) => {
@@ -138,34 +132,30 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
           value: newValue
         };
         
-        // If this is an availability metric, update all days that don't have specific values
         if (metric.category === "AVAILABILITY") {
           const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
           const availability = { ...(metric.availability || {}) };
           
           days.forEach(day => {
-            // Only update days that haven't been manually set
             if (availability[day] === undefined || availability[day] === metric.value) {
               availability[day] = newValue;
             }
           });
           
-          updatedMetric.availability = availability;
+          updatedMetric.availability = availability as Metric['availability'];
         }
         
-        // Similarly for other metrics with day values
         if (metric.dayValues) {
           const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
           const dayValues = { ...(metric.dayValues || {}) };
           
           days.forEach(day => {
-            // Only update days that haven't been manually set
             if (dayValues[day] === undefined || dayValues[day] === metric.value) {
               dayValues[day] = newValue;
             }
           });
           
-          updatedMetric.dayValues = dayValues;
+          updatedMetric.dayValues = dayValues as Metric['dayValues'];
         }
         
         return updatedMetric;
@@ -182,67 +172,65 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       if (metric.id === metricId) {
         if (day) {
           if (metric.category === "AVAILABILITY") {
+            const defaultValues = {
+              monday: metric.value,
+              tuesday: metric.value,
+              wednesday: metric.value,
+              thursday: metric.value,
+              friday: metric.value
+            };
+            
             return {
               ...metric,
               availability: {
-                ...metric.availability || {
-                  monday: metric.value,
-                  tuesday: metric.value,
-                  wednesday: metric.value,
-                  thursday: metric.value,
-                  friday: metric.value
-                },
+                ...(metric.availability || defaultValues),
                 [day]: value
               }
             };
           } else {
-            // For non-availability metrics, update the day-specific value
+            const defaultValues = {
+              monday: metric.value,
+              tuesday: metric.value,
+              wednesday: metric.value,
+              thursday: metric.value,
+              friday: metric.value
+            };
+            
             return {
               ...metric,
               dayValues: {
-                ...metric.dayValues || {
-                  monday: metric.value,
-                  tuesday: metric.value,
-                  wednesday: metric.value,
-                  thursday: metric.value,
-                  friday: metric.value
-                },
+                ...(metric.dayValues || defaultValues),
                 [day]: value
               }
             };
           }
         } else {
-          // Update the overall value
           let updatedMetric = { ...metric, value: value };
           
-          // For availability metrics, synchronize all days
           if (metric.category === "AVAILABILITY") {
             const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
             const availability = { ...(metric.availability || {}) };
             
             days.forEach(d => {
-              // Only update days that haven't been manually set
               if (availability[d] === undefined || availability[d] === metric.value) {
                 availability[d] = value;
               }
             });
             
-            updatedMetric.availability = availability;
+            updatedMetric.availability = availability as Metric['availability'];
           }
           
-          // Similarly for other metrics with day values
           if (metric.dayValues) {
             const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
             const dayValues = { ...(metric.dayValues || {}) };
             
             days.forEach(d => {
-              // Only update days that haven't been manually set
               if (dayValues[d] === undefined || dayValues[d] === metric.value) {
                 dayValues[d] = value;
               }
             });
             
-            updatedMetric.dayValues = dayValues;
+            updatedMetric.dayValues = dayValues as Metric['dayValues'];
           }
           
           return updatedMetric;
@@ -327,17 +315,6 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     
     return metric.availability && metric.availability[day] !== undefined 
       ? metric.availability[day] 
-      : metric.value;
-  };
-  
-  // New helper function to get day-specific value for any metric type
-  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
-    if (metric.category === "AVAILABILITY") {
-      return getDayAvailability(metric, day);
-    }
-    
-    return metric.dayValues && metric.dayValues[day] !== undefined 
-      ? metric.dayValues[day] 
       : metric.value;
   };
 
