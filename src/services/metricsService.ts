@@ -21,7 +21,14 @@ const getDefaultMetrics = (): Metric[] => [
     notes: "Systems available throughout the week",
     greenThreshold: "≥ 98%",
     yellowThreshold: "90-97%",
-    redThreshold: "< 90%"
+    redThreshold: "< 90%",
+    availability: {
+      monday: 98.5,
+      tuesday: 99.1,
+      wednesday: 96.8,
+      thursday: 98.2,
+      friday: 97.9
+    }
   },
   {
     id: "2",

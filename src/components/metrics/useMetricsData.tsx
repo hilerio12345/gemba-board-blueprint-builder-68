@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Metric } from "../../types/metrics";
 import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsService";
@@ -68,7 +67,6 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
   };
 
   const handleParametersUpdate = (parameters: MetricParameter[]) => {
-    // Create a mapping of category to parameter for easier lookup
     const parametersByCategory = parameters.reduce((acc, param) => {
       acc[param.category] = param;
       return acc;
@@ -114,13 +112,38 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     updateMetricsForDate(dateKey, updatedMetrics);
   };
 
-  const handleAvailabilityChange = (metricId: string, value: number) => {
+  const handleAvailabilityChange = (metricId: string, value: number, day?: keyof Metric['status']) => {
     const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
-        return {
-          ...metric,
-          value: value
-        };
+        if (day) {
+          return {
+            ...metric,
+            availability: {
+              ...metric.availability || {
+                monday: metric.value,
+                tuesday: metric.value,
+                wednesday: metric.value,
+                thursday: metric.value,
+                friday: metric.value
+              },
+              [day]: value
+            }
+          };
+        } else {
+          return {
+            ...metric,
+            value: value,
+            availability: {
+              ...metric.availability || {
+                monday: metric.value,
+                tuesday: metric.value,
+                wednesday: metric.value,
+                thursday: metric.value,
+                friday: metric.value
+              }
+            }
+          };
+        }
       }
       return metric;
     });
@@ -130,7 +153,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     
     toast({
       title: "Availability updated",
-      description: `Availability value updated to ${value}.`
+      description: day 
+        ? `${day.charAt(0).toUpperCase() + day.slice(1)} availability updated to ${value}.` 
+        : `Overall availability value updated to ${value}.`
     });
   };
 
@@ -192,6 +217,14 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     }
   };
 
+  const getDayAvailability = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category !== "AVAILABILITY") return undefined;
+    
+    return metric.availability && metric.availability[day] !== undefined 
+      ? metric.availability[day] 
+      : metric.value;
+  };
+
   return {
     metrics,
     expandedMetric,
@@ -205,6 +238,7 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     handleAvailabilityChange,
     toggleExpanded,
     getMetricColor,
-    viewMode
+    viewMode,
+    getDayAvailability
   };
 };

@@ -25,7 +25,8 @@ const MetricsTable = () => {
     handleGoalChange,
     handleAvailabilityChange,
     toggleExpanded,
-    getMetricColor
+    getMetricColor,
+    getDayAvailability
   } = useMetricsData(dateKey, viewMode);
 
   return (
@@ -74,6 +75,7 @@ const MetricsTable = () => {
               generateTrendData={generateTrendData}
               getMetricColor={getMetricColor}
               viewMode={viewMode}
+              getDayAvailability={getDayAvailability}
             />
           ))}
         </TableBody>

@@ -15,4 +15,11 @@ export interface Metric {
   greenThreshold?: string;
   yellowThreshold?: string;
   redThreshold?: string;
+  availability?: {
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+  };
 }
