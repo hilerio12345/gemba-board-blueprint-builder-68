@@ -48,6 +48,7 @@ const MetricRow = ({
   const [tempAvailability, setTempAvailability] = useState(metric.value.toString());
   const [editingDay, setEditingDay] = useState<keyof Metric['status'] | null>(null);
   const [editingDayValue, setEditingDayValue] = useState("");
+  const [hoveredCell, setHoveredCell] = useState<keyof Metric['status'] | null>(null);
   
   // Get day-specific values for all metrics
   const getMondayValue = () => getDayValue ? getDayValue(metric, 'monday') : metric.value;
@@ -125,14 +126,16 @@ const MetricRow = ({
         <div className="mt-2 flex items-center justify-center">
           <div className="flex items-center gap-1 text-sm">
             <span>{value}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0"
-              onClick={() => handleAvailabilityEdit(day)}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
+            {hoveredCell === day && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0"
+                onClick={() => handleAvailabilityEdit(day)}
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
       );
@@ -194,15 +197,17 @@ const MetricRow = ({
         <div className="mt-1 flex items-center justify-center">
           <div className="flex items-center gap-1 text-sm">
             <span>{value}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0"
-              onClick={() => handleDayValueEdit(day)}
-              title={`Edit ${day} value`}
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
+            {hoveredCell === day && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0"
+                onClick={() => handleDayValueEdit(day)}
+                title={`Edit ${day} value`}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
       );
@@ -235,35 +240,55 @@ const MetricRow = ({
         
         {viewMode === 'weekly' ? (
           <>
-            <TableCell className="text-center border-r border-gray-200 p-1">
+            <TableCell 
+              className="text-center border-r border-gray-200 p-1" 
+              onMouseEnter={() => setHoveredCell('monday')}
+              onMouseLeave={() => setHoveredCell(null)}
+            >
               <StatusSelector 
                 value={metric.status.monday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'monday', value)}
               />
               {renderDayValue('monday')}
             </TableCell>
-            <TableCell className="text-center border-r border-gray-200 p-1">
+            <TableCell 
+              className="text-center border-r border-gray-200 p-1"
+              onMouseEnter={() => setHoveredCell('tuesday')}
+              onMouseLeave={() => setHoveredCell(null)}
+            >
               <StatusSelector 
                 value={metric.status.tuesday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'tuesday', value)}
               />
               {renderDayValue('tuesday')}
             </TableCell>
-            <TableCell className="text-center border-r border-gray-200 p-1">
+            <TableCell 
+              className="text-center border-r border-gray-200 p-1"
+              onMouseEnter={() => setHoveredCell('wednesday')}
+              onMouseLeave={() => setHoveredCell(null)}
+            >
               <StatusSelector 
                 value={metric.status.wednesday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'wednesday', value)}
               />
               {renderDayValue('wednesday')}
             </TableCell>
-            <TableCell className="text-center border-r border-gray-200 p-1">
+            <TableCell 
+              className="text-center border-r border-gray-200 p-1"
+              onMouseEnter={() => setHoveredCell('thursday')}
+              onMouseLeave={() => setHoveredCell(null)}
+            >
               <StatusSelector 
                 value={metric.status.thursday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'thursday', value)}
               />
               {renderDayValue('thursday')}
             </TableCell>
-            <TableCell className="text-center border-r border-gray-200 p-1">
+            <TableCell 
+              className="text-center border-r border-gray-200 p-1"
+              onMouseEnter={() => setHoveredCell('friday')}
+              onMouseLeave={() => setHoveredCell(null)}
+            >
               <StatusSelector 
                 value={metric.status.friday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'friday', value)}
@@ -272,11 +297,34 @@ const MetricRow = ({
             </TableCell>
           </>
         ) : (
-          <TableCell className="text-center border-r border-gray-200 p-1">
+          <TableCell 
+            className="text-center border-r border-gray-200 p-1"
+            onMouseEnter={() => setHoveredCell(currentDay)}
+            onMouseLeave={() => setHoveredCell(null)}
+          >
             <StatusSelector 
               value={metric.status[currentDay]} 
               onValueChange={(value) => onStatusChange(metric.id, currentDay, value)}
             />
+            {metric.category !== "AVAILABILITY" && (
+              <div className="mt-2 flex items-center justify-center">
+                <div className="flex items-center gap-1 text-sm">
+                  <span>{getDayValue ? getDayValue(metric, currentDay) : metric.value}</span>
+                  {hoveredCell === currentDay && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0"
+                      onClick={() => handleDayValueEdit(currentDay)}
+                      title={`Edit ${currentDay} value`}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+            {metric.category === "AVAILABILITY" && renderDayValue(currentDay)}
           </TableCell>
         )}
         

@@ -41,6 +41,7 @@ const MetricHeader = ({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
   const [isHovered, setIsHovered] = useState<string | null>(null);
+  const [isValueHovered, setIsValueHovered] = useState(false);
 
   const startEditing = (field: string, initialValue: string) => {
     setEditingField(field);
@@ -81,6 +82,8 @@ const MetricHeader = ({
             <span 
               className="text-sm font-medium cursor-pointer"
               onClick={category === "AVAILABILITY" ? onAvailabilityEdit : undefined}
+              onMouseEnter={() => setIsValueHovered(true)}
+              onMouseLeave={() => setIsValueHovered(false)}
             >
               {isEditingAvailability && category === "AVAILABILITY" && viewMode === 'daily' ? (
                 <Input
@@ -103,7 +106,7 @@ const MetricHeader = ({
             >
               <ChevronUp className="h-4 w-4" />
             </Button>
-            {category === "AVAILABILITY" && viewMode === 'daily' && !isEditingAvailability && (
+            {category === "AVAILABILITY" && viewMode === 'daily' && !isEditingAvailability && isValueHovered && (
               <Button
                 variant="ghost"
                 size="sm"

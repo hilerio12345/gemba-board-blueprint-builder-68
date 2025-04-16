@@ -14,9 +14,129 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     setMetrics(loadedMetrics);
   }, [dateKey]);
 
-  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
-    if (metric.category === "AVAILABILITY") {
-      return getDayAvailability(metric, day);
+  const calculateStatusColor = (metric: Metric, value: number): string => {
+    const parseThreshold = (threshold: string | undefined): number | null => {
+      if (!threshold) return null;
+      
+      const matches = threshold.match(/(>=?|<=?|<|>)?\s*(\d+(?:\.\d+)?)%?/);
+      if (!matches) return null;
+      
+      return parseFloat(matches[2]);
+    };
+
+    if (metric.greenThreshold) {
+      const greenMatch = metric.greenThreshold.match(/(>=?|<=?|<|>)?\s*(\d+(?:\.\d+)?)%?/);
+      if (greenMatch) {
+        const operator = greenMatch[1] || '>=';
+        const threshold = parseFloat(greenMatch[2]);
+        
+        switch (operator) {
+          case '>=':
+            if (value >= threshold) return 'green';
+            break;
+          case '>':
+            if (value > threshold) return 'green';
+            break;
+          case '<=':
+            if (value <= threshold) return 'green';
+            break;
+          case '<':
+            if (value < threshold) return 'green';
+            break;
+        }
+      }
+    }
+
+    if (metric.yellowThreshold) {
+      const yellowMatch = metric.yellowThreshold.match(/(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)%?/);
+      if (yellowMatch) {
+        const lower = parseFloat(yellowMatch[1]);
+        const upper = parseFloat(yellowMatch[2]);
+        if (value >= lower && value <= upper) return 'yellow';
+      } else {
+        const singleMatch = metric.yellowThreshold.match(/(>=?|<=?|<|>)?\s*(\d+(?:\.\d+)?)%?/);
+        if (singleMatch) {
+          const operator = singleMatch[1] || '=';
+          const threshold = parseFloat(singleMatch[2]);
+          
+          switch (operator) {
+            case '>=':
+              if (value >= threshold) return 'yellow';
+              break;
+            case '>':
+              if (value > threshold) return 'yellow';
+              break;
+            case '<=':
+              if (value <= threshold) return 'yellow';
+              break;
+            case '<':
+              if (value < threshold) return 'yellow';
+              break;
+            case '=':
+              if (value === threshold) return 'yellow';
+              break;
+          }
+        }
+      }
+    }
+
+    if (metric.redThreshold) {
+      const redMatch = metric.redThreshold.match(/(>=?|<=?|<|>)?\s*(\d+(?:\.\d+)?)%?/);
+      if (redMatch) {
+        const operator = redMatch[1] || '<';
+        const threshold = parseFloat(redMatch[2]);
+        
+        switch (operator) {
+          case '>=':
+            if (value >= threshold) return 'red';
+            break;
+          case '>':
+            if (value > threshold) return 'red';
+            break;
+          case '<=':
+            if (value <= threshold) return 'red';
+            break;
+          case '<':
+            if (value < threshold) return 'red';
+            break;
+        }
+      }
+    }
+
+    return 'yellow';
+  };
+
+  const generateTrendData = (metricId: string) => {
+    const metric = metrics.find(m => m.id === metricId);
+    if (!metric) return [];
+    
+    return [
+      { 
+        day: "Mon", 
+        value: getMetricDayValue(metric, 'monday')
+      },
+      { 
+        day: "Tue", 
+        value: getMetricDayValue(metric, 'tuesday')
+      },
+      { 
+        day: "Wed", 
+        value: getMetricDayValue(metric, 'wednesday')
+      },
+      { 
+        day: "Thu", 
+        value: getMetricDayValue(metric, 'thursday')
+      },
+      { 
+        day: "Fri", 
+        value: getMetricDayValue(metric, 'friday')
+      },
+    ];
+  };
+
+  const getMetricDayValue = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY" && metric.availability && metric.availability[day] !== undefined) {
+      return metric.availability[day];
     }
     
     if (metric.dayValues && metric.dayValues[day] !== undefined) {
@@ -32,32 +152,24 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     return statusToValue[metric.status[day] as keyof typeof statusToValue] || metric.value;
   };
 
-  const generateTrendData = (metricId: string) => {
-    const metric = metrics.find(m => m.id === metricId);
-    if (!metric) return [];
-    
-    return [
-      { 
-        day: "Mon", 
-        value: getDayValue(metric, 'monday')
-      },
-      { 
-        day: "Tue", 
-        value: getDayValue(metric, 'tuesday')
-      },
-      { 
-        day: "Wed", 
-        value: getDayValue(metric, 'wednesday')
-      },
-      { 
-        day: "Thu", 
-        value: getDayValue(metric, 'thursday')
-      },
-      { 
-        day: "Fri", 
-        value: getDayValue(metric, 'friday')
-      },
-    ];
+  const updateStatusBasedOnValues = (updatedMetrics: Metric[]): Metric[] => {
+    return updatedMetrics.map(metric => {
+      const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+      const updatedStatus = { ...metric.status };
+      
+      days.forEach(day => {
+        const dayValue = metric.category === "AVAILABILITY" 
+          ? (metric.availability?.[day] ?? metric.value)
+          : (metric.dayValues?.[day] ?? metric.value);
+          
+        updatedStatus[day] = calculateStatusColor(metric, dayValue);
+      });
+      
+      return {
+        ...metric,
+        status: updatedStatus
+      };
+    });
   };
 
   const handleStatusChange = (metricId: string, day: keyof Metric['status'], value: string) => {
@@ -120,9 +232,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       description: "Parameters for all metric categories have been updated successfully",
     });
   };
-  
+
   const handleValueChange = (metricId: string, increment: boolean) => {
-    const updatedMetrics = metrics.map(metric => {
+    let updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         let newValue = increment ? metric.value + 1 : metric.value - 1;
         if (newValue < 0) newValue = 0;
@@ -163,12 +275,14 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       return metric;
     });
     
+    updatedMetrics = updateStatusBasedOnValues(updatedMetrics);
+    
     setMetrics(updatedMetrics);
     updateMetricsForDate(dateKey, updatedMetrics);
   };
 
   const handleAvailabilityChange = (metricId: string, value: number, day?: keyof Metric['status']) => {
-    const updatedMetrics = metrics.map(metric => {
+    let updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         if (day) {
           if (metric.category === "AVAILABILITY") {
@@ -238,6 +352,8 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       }
       return metric;
     });
+    
+    updatedMetrics = updateStatusBasedOnValues(updatedMetrics);
     
     setMetrics(updatedMetrics);
     updateMetricsForDate(dateKey, updatedMetrics);
@@ -318,6 +434,16 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       : metric.value;
   };
 
+  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY") {
+      return getDayAvailability(metric, day);
+    }
+    
+    return metric.dayValues && metric.dayValues[day] !== undefined 
+      ? metric.dayValues[day] 
+      : metric.value;
+  };
+
   return {
     metrics,
     expandedMetric,
@@ -333,6 +459,7 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     getMetricColor,
     viewMode,
     getDayAvailability,
-    getDayValue
+    getDayValue,
+    getMetricDayValue
   };
 };
