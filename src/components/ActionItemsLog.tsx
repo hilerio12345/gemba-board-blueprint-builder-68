@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface ActionItem {
   id: string;
@@ -61,6 +62,15 @@ const ActionItemsLog = () => {
   });
 
   const handleAddNewItem = () => {
+    if (!newItem.owner || !newItem.issue || !newItem.dueDate) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in Owner, Action Item, and Due Date fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const updatedNewItem = {
       ...newItem,
       id: (actionItems.length + 1).toString()
@@ -68,6 +78,7 @@ const ActionItemsLog = () => {
     
     setActionItems([...actionItems, updatedNewItem]);
     
+    // Reset the new item form
     setNewItem({
       id: "",
       date: new Date().toISOString().split('T')[0],
@@ -75,6 +86,11 @@ const ActionItemsLog = () => {
       issue: "",
       dueDate: "",
       status: "NS"
+    });
+    
+    toast({
+      title: "Action item added",
+      description: "New CI action item has been added successfully."
     });
   };
 
@@ -92,6 +108,11 @@ const ActionItemsLog = () => {
 
   const handleDeleteItem = (id: string) => {
     setActionItems(actionItems.filter(item => item.id !== id));
+    
+    toast({
+      title: "Action item deleted",
+      description: "The CI action item has been removed."
+    });
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -253,15 +274,27 @@ const ActionItemsLog = () => {
                 variant="outline" 
                 size="icon" 
                 onClick={handleAddNewItem}
-                className="h-8 w-8"
-                disabled={!newItem.owner || !newItem.issue || !newItem.dueDate}
+                className="h-8 w-8 bg-green-50 hover:bg-green-100 border-green-200"
+                title="Add new action item"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 text-green-600" />
               </Button>
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
+      
+      {/* Fixed action button at bottom right */}
+      <div className="mt-4 flex justify-end">
+        <Button
+          onClick={handleAddNewItem}
+          className="flex items-center gap-2"
+          disabled={!newItem.owner || !newItem.issue || !newItem.dueDate}
+        >
+          <Plus className="h-4 w-4" />
+          Add CI Action
+        </Button>
+      </div>
       
       {/* Add hidden placeholder for future tier integration */}
       {/* <!-- TIER_INTEGRATION: This is where CI Action items will be aggregated to Tier 2 dashboards --> */}
