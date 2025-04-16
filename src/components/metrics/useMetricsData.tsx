@@ -116,33 +116,56 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
         if (day) {
-          return {
-            ...metric,
-            availability: {
-              ...metric.availability || {
-                monday: metric.value,
-                tuesday: metric.value,
-                wednesday: metric.value,
-                thursday: metric.value,
-                friday: metric.value
-              },
-              [day]: value
-            }
-          };
-        } else {
-          return {
-            ...metric,
-            value: value,
-            availability: {
-              ...metric.availability || {
-                monday: metric.value,
-                tuesday: metric.value,
-                wednesday: metric.value,
-                thursday: metric.value,
-                friday: metric.value
+          if (metric.category === "AVAILABILITY") {
+            return {
+              ...metric,
+              availability: {
+                ...metric.availability || {
+                  monday: metric.value,
+                  tuesday: metric.value,
+                  wednesday: metric.value,
+                  thursday: metric.value,
+                  friday: metric.value
+                },
+                [day]: value
               }
-            }
-          };
+            };
+          } else {
+            return {
+              ...metric,
+              value: value,
+              availability: {
+                ...metric.availability || {
+                  monday: metric.value,
+                  tuesday: metric.value,
+                  wednesday: metric.value,
+                  thursday: metric.value,
+                  friday: metric.value
+                }
+              }
+            };
+          }
+        } else {
+          if (metric.category === "AVAILABILITY") {
+            return {
+              ...metric,
+              value: value,
+              availability: {
+                ...metric.availability || {
+                  monday: metric.value,
+                  tuesday: metric.value,
+                  wednesday: metric.value,
+                  thursday: metric.value,
+                  friday: metric.value
+                }
+              }
+            };
+          } else {
+            return {
+              ...metric,
+              value: value
+            };
+          }
         }
       }
       return metric;
@@ -151,11 +174,13 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     setMetrics(updatedMetrics);
     updateMetricsForDate(dateKey, updatedMetrics);
     
+    const metricType = metrics.find(m => m.id === metricId)?.category || "metric";
+    
     toast({
-      title: "Availability updated",
+      title: `${metricType} value updated`,
       description: day 
-        ? `${day.charAt(0).toUpperCase() + day.slice(1)} availability updated to ${value}.` 
-        : `Overall availability value updated to ${value}.`
+        ? `${day.charAt(0).toUpperCase() + day.slice(1)} value updated to ${value}.` 
+        : `Overall value updated to ${value}.`
     });
   };
 

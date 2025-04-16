@@ -7,7 +7,7 @@ import MetricHeader from "./MetricHeader";
 import MetricsLineGraph from "../MetricsLineGraph";
 import { Metric } from "../../types/metrics";
 import { useDateContext } from "../../contexts/DateContext";
-import { Edit2 } from "lucide-react";
+import { Edit2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MetricRowProps {
@@ -45,6 +45,7 @@ const MetricRow = ({
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
   const [tempAvailability, setTempAvailability] = useState(metric.value.toString());
   const [editingDay, setEditingDay] = useState<keyof Metric['status'] | null>(null);
+  const [editingDayValue, setEditingDayValue] = useState("");
   
   // Get day-specific availability values
   const getMondayValue = () => getDayAvailability ? getDayAvailability(metric, 'monday') : metric.value;
@@ -135,6 +136,72 @@ const MetricRow = ({
       </div>
     );
   };
+
+  // New function to handle day-specific value editing for all metrics
+  const handleDayValueEdit = (day: keyof Metric['status']) => {
+    setEditingDay(day);
+    setEditingDayValue(metric.value.toString());
+  };
+
+  const handleDayValueSave = () => {
+    if (editingDay) {
+      const newValue = parseFloat(editingDayValue);
+      if (!isNaN(newValue)) {
+        onAvailabilityChange(metric.id, newValue, editingDay);
+      }
+      setEditingDay(null);
+    }
+  };
+
+  const handleDayValueKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleDayValueSave();
+    } else if (e.key === "Escape") {
+      setEditingDay(null);
+    }
+  };
+
+  // Render day-specific value editing for all metric categories
+  const renderDayValue = (day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY") {
+      return renderDayAvailability(day);
+    }
+
+    if (editingDay === day) {
+      return (
+        <div className="mt-2 flex items-center justify-center">
+          <Input
+            value={editingDayValue}
+            onChange={(e) => setEditingDayValue(e.target.value)}
+            className="h-6 text-xs w-16 mx-auto"
+            onBlur={handleDayValueSave}
+            onKeyDown={handleDayValueKeyDown}
+            autoFocus
+          />
+        </div>
+      );
+    }
+
+    if (viewMode === 'weekly') {
+      return (
+        <div className="mt-1 flex items-center justify-center">
+          <div className="flex items-center gap-1 text-xs">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              onClick={() => handleDayValueEdit(day)}
+              title={`Edit ${day} value`}
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
   
   return (
     <React.Fragment>
@@ -165,35 +232,35 @@ const MetricRow = ({
                 value={metric.status.monday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'monday', value)}
               />
-              {metric.category === "AVAILABILITY" && renderDayAvailability('monday')}
+              {renderDayValue('monday')}
             </TableCell>
             <TableCell className="text-center border-r border-gray-200 p-1">
               <StatusSelector 
                 value={metric.status.tuesday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'tuesday', value)}
               />
-              {metric.category === "AVAILABILITY" && renderDayAvailability('tuesday')}
+              {renderDayValue('tuesday')}
             </TableCell>
             <TableCell className="text-center border-r border-gray-200 p-1">
               <StatusSelector 
                 value={metric.status.wednesday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'wednesday', value)}
               />
-              {metric.category === "AVAILABILITY" && renderDayAvailability('wednesday')}
+              {renderDayValue('wednesday')}
             </TableCell>
             <TableCell className="text-center border-r border-gray-200 p-1">
               <StatusSelector 
                 value={metric.status.thursday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'thursday', value)}
               />
-              {metric.category === "AVAILABILITY" && renderDayAvailability('thursday')}
+              {renderDayValue('thursday')}
             </TableCell>
             <TableCell className="text-center border-r border-gray-200 p-1">
               <StatusSelector 
                 value={metric.status.friday} 
                 onValueChange={(value) => onStatusChange(metric.id, 'friday', value)}
               />
-              {metric.category === "AVAILABILITY" && renderDayAvailability('friday')}
+              {renderDayValue('friday')}
             </TableCell>
           </>
         ) : (
