@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Table, 
@@ -78,7 +77,6 @@ const ActionItemsLog = () => {
     
     setActionItems([...actionItems, updatedNewItem]);
     
-    // Reset the new item form
     setNewItem({
       id: "",
       date: new Date().toISOString().split('T')[0],
@@ -217,7 +215,6 @@ const ActionItemsLog = () => {
             </TableRow>
           ))}
           
-          {/* Add new item row */}
           <TableRow className="bg-gray-50">
             <TableCell className="p-1">
               <Input 
@@ -283,18 +280,6 @@ const ActionItemsLog = () => {
           </TableRow>
         </TableBody>
       </Table>
-      
-      {/* Fixed action button at bottom right */}
-      <div className="mt-4 flex justify-end">
-        <Button
-          onClick={handleAddNewItem}
-          className="flex items-center gap-2"
-          disabled={!newItem.owner || !newItem.issue || !newItem.dueDate}
-        >
-          <Plus className="h-4 w-4" />
-          Add CI Action
-        </Button>
-      </div>
       
       {/* Add hidden placeholder for future tier integration */}
       {/* <!-- TIER_INTEGRATION: This is where CI Action items will be aggregated to Tier 2 dashboards --> */}
