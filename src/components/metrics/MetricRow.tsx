@@ -14,6 +14,8 @@ interface MetricRowProps {
   onNotesChange: (metricId: string, value: string) => void;
   onValueChange: (metricId: string, increment: boolean) => void;
   onToggleExpanded: (metricId: string) => void;
+  onThresholdChange: (metricId: string, thresholdType: string, value: string) => void;
+  onGoalChange: (metricId: string, value: string) => void;
   generateTrendData: (metricId: string) => { day: string; value: number }[];
   getMetricColor: (category: string) => string;
 }
@@ -25,6 +27,8 @@ const MetricRow = ({
   onNotesChange,
   onValueChange,
   onToggleExpanded,
+  onThresholdChange,
+  onGoalChange,
   generateTrendData,
   getMetricColor
 }: MetricRowProps) => {
@@ -38,8 +42,9 @@ const MetricRow = ({
             expandedMetric={expandedMetric}
             onValueChange={onValueChange}
             onToggleExpanded={onToggleExpanded}
+            onThresholdChange={onThresholdChange}
+            onGoalChange={onGoalChange}
           />
-          <div className="text-xs text-gray-500 mt-1">{metric.goal}</div>
         </TableCell>
         
         <TableCell className="text-center border-r border-gray-200 p-1">

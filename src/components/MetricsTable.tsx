@@ -17,6 +17,8 @@ const MetricsTable = () => {
     handleNotesChange,
     handleParametersUpdate,
     handleValueChange,
+    handleThresholdChange,
+    handleGoalChange,
     toggleExpanded,
     getMetricColor
   } = useMetricsData(dateKey);
@@ -47,6 +49,8 @@ const MetricsTable = () => {
               onNotesChange={handleNotesChange}
               onValueChange={handleValueChange}
               onToggleExpanded={toggleExpanded}
+              onThresholdChange={handleThresholdChange}
+              onGoalChange={handleGoalChange}
               generateTrendData={generateTrendData}
               getMetricColor={getMetricColor}
             />

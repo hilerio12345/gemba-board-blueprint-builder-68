@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { Metric } from "../../types/metrics";
 import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsService";
 import { MetricParameter } from "../MetricParametersDialog";
+import { useToast } from "@/hooks/use-toast";
 
 export const useMetricsData = (dateKey: string) => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
+  const { toast } = useToast();
   
   useEffect(() => {
     const loadedMetrics = getMetricsForDate(dateKey);
@@ -99,6 +101,46 @@ export const useMetricsData = (dateKey: string) => {
     updateMetricsForDate(dateKey, updatedMetrics);
   };
 
+  const handleThresholdChange = (metricId: string, thresholdType: string, value: string) => {
+    const updatedMetrics = metrics.map(metric => {
+      if (metric.id === metricId) {
+        return {
+          ...metric,
+          [thresholdType]: value
+        };
+      }
+      return metric;
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
+    
+    toast({
+      title: "Threshold updated",
+      description: `${thresholdType.replace('Threshold', '')} threshold updated successfully.`
+    });
+  };
+
+  const handleGoalChange = (metricId: string, value: string) => {
+    const updatedMetrics = metrics.map(metric => {
+      if (metric.id === metricId) {
+        return {
+          ...metric,
+          goal: value.startsWith('Goal:') ? value : `Goal: ${value}`
+        };
+      }
+      return metric;
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
+    
+    toast({
+      title: "Goal updated",
+      description: "Metric goal updated successfully."
+    });
+  };
+
   const toggleExpanded = (metricId: string) => {
     setExpandedMetric(expandedMetric === metricId ? null : metricId);
     setTimeout(() => {
@@ -125,6 +167,8 @@ export const useMetricsData = (dateKey: string) => {
     handleNotesChange,
     handleParametersUpdate,
     handleValueChange,
+    handleThresholdChange,
+    handleGoalChange,
     toggleExpanded,
     getMetricColor
   };
