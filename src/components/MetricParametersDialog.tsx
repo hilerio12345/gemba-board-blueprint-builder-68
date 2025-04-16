@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Slider } from "@/components/ui/slider"; 
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
 
 export interface MetricParameter {
   category: string;
@@ -44,6 +35,11 @@ const MetricParametersDialog = ({
   const [parameters, setParameters] = useState<MetricParameter[]>(initialParameters);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+
+  // Update local parameters when initialParameters change
+  useEffect(() => {
+    setParameters(initialParameters);
+  }, [initialParameters]);
 
   const handleParameterChange = (index: number, field: string, value: string) => {
     const updatedParameters = [...parameters];

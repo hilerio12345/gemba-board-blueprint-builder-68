@@ -26,6 +26,7 @@ const MetricHeader = ({
 }: MetricHeaderProps) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
+  const [isHovered, setIsHovered] = useState<string | null>(null);
 
   const startEditing = (field: string, initialValue: string) => {
     setEditingField(field);
@@ -73,7 +74,11 @@ const MetricHeader = ({
           </Button>
         </div>
       </div>
-      <div className="text-xs flex items-center mt-1">
+      <div 
+        className="text-xs flex items-center mt-1"
+        onMouseEnter={() => setIsHovered('goal')}
+        onMouseLeave={() => setIsHovered(null)}
+      >
         {editingField === 'goal' ? (
           <Input
             value={tempValue}
@@ -87,20 +92,26 @@ const MetricHeader = ({
           <div className="flex items-center text-gray-500 w-full">
             <span className="mr-1">Goal:</span>
             <span>{metric.goal.replace('Goal: ', '')}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 ml-1"
-              onClick={() => startEditing('goal', metric.goal.replace('Goal: ', ''))}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
+            {isHovered === 'goal' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 ml-1 opacity-100"
+                onClick={() => startEditing('goal', metric.goal.replace('Goal: ', ''))}
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         )}
       </div>
       {metric.greenThreshold && (
         <div className="text-xs text-gray-500 mt-2">
-          <div className="flex items-center">
+          <div 
+            className="flex items-center"
+            onMouseEnter={() => setIsHovered('green')}
+            onMouseLeave={() => setIsHovered(null)}
+          >
             <span className="w-3 h-3 rounded-full bg-green-500 inline-block mr-1"></span>
             {editingField === 'greenThreshold' ? (
               <Input
@@ -114,18 +125,24 @@ const MetricHeader = ({
             ) : (
               <div className="flex items-center">
                 <span>{metric.greenThreshold}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 w-5 p-0 ml-1"
-                  onClick={() => startEditing('greenThreshold', metric.greenThreshold || '')}
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
+                {isHovered === 'green' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 ml-1"
+                    onClick={() => startEditing('greenThreshold', metric.greenThreshold || '')}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             )}
           </div>
-          <div className="flex items-center">
+          <div 
+            className="flex items-center"
+            onMouseEnter={() => setIsHovered('yellow')}
+            onMouseLeave={() => setIsHovered(null)}
+          >
             <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block mr-1"></span>
             {editingField === 'yellowThreshold' ? (
               <Input
@@ -139,18 +156,24 @@ const MetricHeader = ({
             ) : (
               <div className="flex items-center">
                 <span>{metric.yellowThreshold}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 w-5 p-0 ml-1"
-                  onClick={() => startEditing('yellowThreshold', metric.yellowThreshold || '')}
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
+                {isHovered === 'yellow' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 ml-1"
+                    onClick={() => startEditing('yellowThreshold', metric.yellowThreshold || '')}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             )}
           </div>
-          <div className="flex items-center">
+          <div 
+            className="flex items-center"
+            onMouseEnter={() => setIsHovered('red')}
+            onMouseLeave={() => setIsHovered(null)}
+          >
             <span className="w-3 h-3 rounded-full bg-red-500 inline-block mr-1"></span>
             {editingField === 'redThreshold' ? (
               <Input
@@ -164,14 +187,16 @@ const MetricHeader = ({
             ) : (
               <div className="flex items-center">
                 <span>{metric.redThreshold}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 w-5 p-0 ml-1"
-                  onClick={() => startEditing('redThreshold', metric.redThreshold || '')}
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
+                {isHovered === 'red' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 ml-1"
+                    onClick={() => startEditing('redThreshold', metric.redThreshold || '')}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             )}
           </div>

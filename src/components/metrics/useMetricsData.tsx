@@ -68,8 +68,16 @@ export const useMetricsData = (dateKey: string) => {
   };
 
   const handleParametersUpdate = (parameters: MetricParameter[]) => {
-    const updatedMetrics = metrics.map((metric, index) => {
-      const parameter = parameters[index];
+    // Create a mapping of category to parameter for easier lookup
+    const parametersByCategory = parameters.reduce((acc, param) => {
+      acc[param.category] = param;
+      return acc;
+    }, {} as Record<string, MetricParameter>);
+
+    const updatedMetrics = metrics.map(metric => {
+      const parameter = parametersByCategory[metric.category];
+      if (!parameter) return metric;
+      
       return {
         ...metric,
         goal: parameter.goal,
@@ -81,6 +89,11 @@ export const useMetricsData = (dateKey: string) => {
     
     setMetrics(updatedMetrics);
     updateMetricsForDate(dateKey, updatedMetrics);
+    
+    toast({
+      title: "All parameters updated",
+      description: "Parameters for all metric categories have been updated successfully",
+    });
   };
   
   const handleValueChange = (metricId: string, increment: boolean) => {
