@@ -114,6 +114,26 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     updateMetricsForDate(dateKey, updatedMetrics);
   };
 
+  const handleAvailabilityChange = (metricId: string, value: number) => {
+    const updatedMetrics = metrics.map(metric => {
+      if (metric.id === metricId) {
+        return {
+          ...metric,
+          value: value
+        };
+      }
+      return metric;
+    });
+    
+    setMetrics(updatedMetrics);
+    updateMetricsForDate(dateKey, updatedMetrics);
+    
+    toast({
+      title: "Availability updated",
+      description: `Availability value updated to ${value}.`
+    });
+  };
+
   const handleThresholdChange = (metricId: string, thresholdType: string, value: string) => {
     const updatedMetrics = metrics.map(metric => {
       if (metric.id === metricId) {
@@ -182,6 +202,7 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     handleValueChange,
     handleThresholdChange,
     handleGoalChange,
+    handleAvailabilityChange,
     toggleExpanded,
     getMetricColor,
     viewMode

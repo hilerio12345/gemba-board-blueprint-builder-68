@@ -13,6 +13,13 @@ interface MetricHeaderProps {
   onToggleExpanded: (metricId: string) => void;
   onThresholdChange: (metricId: string, thresholdType: string, value: string) => void;
   onGoalChange: (metricId: string, value: string) => void;
+  onAvailabilityEdit?: () => void;
+  isEditingAvailability?: boolean;
+  tempAvailability?: string;
+  setTempAvailability?: (value: string) => void;
+  handleAvailabilitySave?: () => void;
+  handleAvailabilityKeyDown?: (e: React.KeyboardEvent) => void;
+  viewMode?: 'daily' | 'weekly';
 }
 
 const MetricHeader = ({ 
@@ -22,7 +29,14 @@ const MetricHeader = ({
   onValueChange,
   onToggleExpanded,
   onThresholdChange,
-  onGoalChange
+  onGoalChange,
+  onAvailabilityEdit,
+  isEditingAvailability,
+  tempAvailability,
+  setTempAvailability,
+  handleAvailabilitySave,
+  handleAvailabilityKeyDown,
+  viewMode = 'weekly'
 }: MetricHeaderProps) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
@@ -54,25 +68,57 @@ const MetricHeader = ({
     <div className="flex flex-col">
       <div className="flex items-center justify-between">
         <span className="font-bold">{category}</span>
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6" 
-            onClick={() => onValueChange(metric.id, false)}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium">{metric.value}</span>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6" 
-            onClick={() => onValueChange(metric.id, true)}
-          >
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-        </div>
+        {viewMode === 'daily' || category !== "AVAILABILITY" ? (
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => onValueChange(metric.id, false)}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+            <span 
+              className="text-sm font-medium cursor-pointer"
+              onClick={category === "AVAILABILITY" ? onAvailabilityEdit : undefined}
+            >
+              {isEditingAvailability && category === "AVAILABILITY" && viewMode === 'daily' ? (
+                <Input
+                  value={tempAvailability}
+                  onChange={(e) => setTempAvailability && setTempAvailability(e.target.value)}
+                  className="h-6 text-xs w-16"
+                  onBlur={handleAvailabilitySave}
+                  onKeyDown={handleAvailabilityKeyDown}
+                  autoFocus
+                />
+              ) : (
+                metric.value
+              )}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => onValueChange(metric.id, true)}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            {category === "AVAILABILITY" && viewMode === 'daily' && !isEditingAvailability && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 ml-1"
+                onClick={onAvailabilityEdit}
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div>
+            {/* Weekly view for AVAILABILITY has edit option in each day's cell */}
+          </div>
+        )}
       </div>
       <div 
         className="text-xs flex items-center mt-1"

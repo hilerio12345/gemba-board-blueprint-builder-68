@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -22,6 +23,7 @@ const MetricsTable = () => {
     handleValueChange,
     handleThresholdChange,
     handleGoalChange,
+    handleAvailabilityChange,
     toggleExpanded,
     getMetricColor
   } = useMetricsData(dateKey, viewMode);
@@ -68,6 +70,7 @@ const MetricsTable = () => {
               onToggleExpanded={toggleExpanded}
               onThresholdChange={handleThresholdChange}
               onGoalChange={handleGoalChange}
+              onAvailabilityChange={handleAvailabilityChange}
               generateTrendData={generateTrendData}
               getMetricColor={getMetricColor}
               viewMode={viewMode}
