@@ -8,7 +8,7 @@ import DatePicker from "@/components/DatePicker";
 import { DateProvider, useDateContext } from "@/contexts/DateContext";
 import { generateHistoricalDataIfNeeded } from "@/services/metricsService";
 import ExportOptions from "@/components/ExportOptions";
-import { CalendarDays, CalendarWeek } from "lucide-react";
+import { CalendarDays, Calendar } from "lucide-react";
 
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
@@ -41,7 +41,7 @@ const GembaContent = () => {
                   </span>
                 ) : (
                   <span className="flex items-center gap-1">
-                    <CalendarWeek className="h-3 w-3" /> Weekly View
+                    <Calendar className="h-3 w-3" /> Weekly View
                   </span>
                 )}
               </span>

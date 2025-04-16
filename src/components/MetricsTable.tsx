@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -7,7 +6,7 @@ import MetricsTableHeader from "./metrics/MetricsTableHeader";
 import MetricRow from "./metrics/MetricRow";
 import { useMetricsData } from "./metrics/useMetricsData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, CalendarWeek } from "lucide-react";
+import { CalendarDays, Calendar } from "lucide-react";
 
 const MetricsTable = () => {
   const { dateKey } = useDateContext();
@@ -37,7 +36,7 @@ const MetricsTable = () => {
               <span>Daily</span>
             </TabsTrigger>
             <TabsTrigger value="weekly" className="flex items-center gap-2">
-              <CalendarWeek className="h-4 w-4" />
+              <Calendar className="h-4 w-4" />
               <span>Weekly</span>
             </TabsTrigger>
           </TabsList>
