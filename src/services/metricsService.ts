@@ -39,7 +39,14 @@ const getDefaultMetrics = (): Metric[] => [
     notes: "4 DVs/wk | 4 DVs | = 4 total",
     greenThreshold: "≥ 4",
     yellowThreshold: "3",
-    redThreshold: "< 3"
+    redThreshold: "< 3",
+    dayValues: {
+      monday: 4,
+      tuesday: 4,
+      wednesday: 3,
+      thursday: 2,
+      friday: 3
+    }
   },
   {
     id: "3",
@@ -50,7 +57,14 @@ const getDefaultMetrics = (): Metric[] => [
     notes: "3rd prty PV > Target",
     greenThreshold: "≥ 75%",
     yellowThreshold: "65-74%",
-    redThreshold: "< 65%"
+    redThreshold: "< 65%",
+    dayValues: {
+      monday: 80,
+      tuesday: 70,
+      wednesday: 72,
+      thursday: 82,
+      friday: 78
+    }
   },
   {
     id: "4",
@@ -61,7 +75,14 @@ const getDefaultMetrics = (): Metric[] => [
     notes: "Overtime % above target on Friday",
     greenThreshold: "< 5%",
     yellowThreshold: "5-7%",
-    redThreshold: "> 7%"
+    redThreshold: "> 7%",
+    dayValues: {
+      monday: 6.1,
+      tuesday: 4.5,
+      wednesday: 3.8,
+      thursday: 4.0,
+      friday: 8.5
+    }
   },
   {
     id: "5",
@@ -72,7 +93,14 @@ const getDefaultMetrics = (): Metric[] => [
     notes: "Training compliance on track",
     greenThreshold: "≥ 95%",
     yellowThreshold: "85-94%",
-    redThreshold: "< 85%"
+    redThreshold: "< 85%",
+    dayValues: {
+      monday: 96,
+      tuesday: 95,
+      wednesday: 94,
+      thursday: 94,
+      friday: 90
+    }
   },
 ];
 
@@ -154,11 +182,29 @@ export const generateHistoricalDataIfNeeded = () => {
           friday: statusOptions[Math.floor(Math.random() * 3)]
         };
         
+        // Generate day values for each metric
+        const dayValues: Record<string, number> = {};
+        if (metric.category === "AVAILABILITY") {
+          dayValues.monday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
+          dayValues.tuesday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
+          dayValues.wednesday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
+          dayValues.thursday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
+          dayValues.friday = Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10;
+        } else {
+          dayValues.monday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
+          dayValues.tuesday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
+          dayValues.wednesday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
+          dayValues.thursday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
+          dayValues.friday = Math.round(newValue * (0.9 + Math.random() * 0.2) * 10) / 10;
+        }
+        
         return {
           ...metric,
           value: newValue,
           status: randomStatus,
-          notes: `Historical data for ${pastDate.toLocaleDateString()}`
+          notes: `Historical data for ${pastDate.toLocaleDateString()}`,
+          availability: metric.category === "AVAILABILITY" ? dayValues : undefined,
+          dayValues: metric.category !== "AVAILABILITY" ? dayValues : undefined
         };
       });
       

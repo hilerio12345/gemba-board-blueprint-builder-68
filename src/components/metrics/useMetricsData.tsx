@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Metric } from "../../types/metrics";
 import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsService";
@@ -18,19 +19,51 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     const metric = metrics.find(m => m.id === metricId);
     if (!metric) return [];
     
+    // Generate trend data based on the actual daily values
+    // or fallback to status-based values if actual values aren't available
+    return [
+      { 
+        day: "Mon", 
+        value: getDayValue(metric, 'monday')
+      },
+      { 
+        day: "Tue", 
+        value: getDayValue(metric, 'tuesday')
+      },
+      { 
+        day: "Wed", 
+        value: getDayValue(metric, 'wednesday')
+      },
+      { 
+        day: "Thu", 
+        value: getDayValue(metric, 'thursday')
+      },
+      { 
+        day: "Fri", 
+        value: getDayValue(metric, 'friday')
+      },
+    ];
+  };
+  
+  // Helper function to get the actual value for a day or derive one from status
+  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY" && metric.availability && metric.availability[day] !== undefined) {
+      return metric.availability[day];
+    }
+    
+    // For other metrics, check if there's a day value
+    if (metric.dayValues && metric.dayValues[day] !== undefined) {
+      return metric.dayValues[day];
+    }
+    
+    // Fallback to status-based estimation
     const statusToValue = {
       green: metric.value * 1.05,
       yellow: metric.value * 0.9,
       red: metric.value * 0.75
     };
     
-    return [
-      { day: "Mon", value: statusToValue[metric.status.monday as keyof typeof statusToValue] || metric.value },
-      { day: "Tue", value: statusToValue[metric.status.tuesday as keyof typeof statusToValue] || metric.value },
-      { day: "Wed", value: statusToValue[metric.status.wednesday as keyof typeof statusToValue] || metric.value },
-      { day: "Thu", value: statusToValue[metric.status.thursday as keyof typeof statusToValue] || metric.value },
-      { day: "Fri", value: statusToValue[metric.status.friday as keyof typeof statusToValue] || metric.value },
-    ];
+    return statusToValue[metric.status[day] as keyof typeof statusToValue] || metric.value;
   };
 
   const handleStatusChange = (metricId: string, day: keyof Metric['status'], value: string) => {
@@ -100,10 +133,42 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
         let newValue = increment ? metric.value + 1 : metric.value - 1;
         if (newValue < 0) newValue = 0;
         
-        return {
+        let updatedMetric = {
           ...metric,
           value: newValue
         };
+        
+        // If this is an availability metric, update all days that don't have specific values
+        if (metric.category === "AVAILABILITY") {
+          const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+          const availability = { ...(metric.availability || {}) };
+          
+          days.forEach(day => {
+            // Only update days that haven't been manually set
+            if (availability[day] === undefined || availability[day] === metric.value) {
+              availability[day] = newValue;
+            }
+          });
+          
+          updatedMetric.availability = availability;
+        }
+        
+        // Similarly for other metrics with day values
+        if (metric.dayValues) {
+          const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+          const dayValues = { ...(metric.dayValues || {}) };
+          
+          days.forEach(day => {
+            // Only update days that haven't been manually set
+            if (dayValues[day] === undefined || dayValues[day] === metric.value) {
+              dayValues[day] = newValue;
+            }
+          });
+          
+          updatedMetric.dayValues = dayValues;
+        }
+        
+        return updatedMetric;
       }
       return metric;
     });
@@ -131,41 +196,56 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
               }
             };
           } else {
+            // For non-availability metrics, update the day-specific value
             return {
               ...metric,
-              value: value,
-              availability: {
-                ...metric.availability || {
+              dayValues: {
+                ...metric.dayValues || {
                   monday: metric.value,
                   tuesday: metric.value,
                   wednesday: metric.value,
                   thursday: metric.value,
                   friday: metric.value
-                }
+                },
+                [day]: value
               }
             };
           }
         } else {
+          // Update the overall value
+          let updatedMetric = { ...metric, value: value };
+          
+          // For availability metrics, synchronize all days
           if (metric.category === "AVAILABILITY") {
-            return {
-              ...metric,
-              value: value,
-              availability: {
-                ...metric.availability || {
-                  monday: metric.value,
-                  tuesday: metric.value,
-                  wednesday: metric.value,
-                  thursday: metric.value,
-                  friday: metric.value
-                }
+            const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            const availability = { ...(metric.availability || {}) };
+            
+            days.forEach(d => {
+              // Only update days that haven't been manually set
+              if (availability[d] === undefined || availability[d] === metric.value) {
+                availability[d] = value;
               }
-            };
-          } else {
-            return {
-              ...metric,
-              value: value
-            };
+            });
+            
+            updatedMetric.availability = availability;
           }
+          
+          // Similarly for other metrics with day values
+          if (metric.dayValues) {
+            const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            const dayValues = { ...(metric.dayValues || {}) };
+            
+            days.forEach(d => {
+              // Only update days that haven't been manually set
+              if (dayValues[d] === undefined || dayValues[d] === metric.value) {
+                dayValues[d] = value;
+              }
+            });
+            
+            updatedMetric.dayValues = dayValues;
+          }
+          
+          return updatedMetric;
         }
       }
       return metric;
@@ -249,6 +329,17 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
       ? metric.availability[day] 
       : metric.value;
   };
+  
+  // New helper function to get day-specific value for any metric type
+  const getDayValue = (metric: Metric, day: keyof Metric['status']) => {
+    if (metric.category === "AVAILABILITY") {
+      return getDayAvailability(metric, day);
+    }
+    
+    return metric.dayValues && metric.dayValues[day] !== undefined 
+      ? metric.dayValues[day] 
+      : metric.value;
+  };
 
   return {
     metrics,
@@ -264,6 +355,7 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = '
     toggleExpanded,
     getMetricColor,
     viewMode,
-    getDayAvailability
+    getDayAvailability,
+    getDayValue
   };
 };

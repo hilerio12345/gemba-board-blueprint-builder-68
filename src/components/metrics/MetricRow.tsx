@@ -24,6 +24,7 @@ interface MetricRowProps {
   getMetricColor: (category: string) => string;
   viewMode?: 'daily' | 'weekly';
   getDayAvailability?: (metric: Metric, day: keyof Metric['status']) => number | undefined;
+  getDayValue?: (metric: Metric, day: keyof Metric['status']) => number | undefined;
 }
 
 const MetricRow = ({ 
@@ -39,7 +40,8 @@ const MetricRow = ({
   generateTrendData,
   getMetricColor,
   viewMode = 'weekly',
-  getDayAvailability
+  getDayAvailability,
+  getDayValue
 }: MetricRowProps) => {
   const { currentDate } = useDateContext();
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
@@ -47,12 +49,12 @@ const MetricRow = ({
   const [editingDay, setEditingDay] = useState<keyof Metric['status'] | null>(null);
   const [editingDayValue, setEditingDayValue] = useState("");
   
-  // Get day-specific availability values
-  const getMondayValue = () => getDayAvailability ? getDayAvailability(metric, 'monday') : metric.value;
-  const getTuesdayValue = () => getDayAvailability ? getDayAvailability(metric, 'tuesday') : metric.value;
-  const getWednesdayValue = () => getDayAvailability ? getDayAvailability(metric, 'wednesday') : metric.value;
-  const getThursdayValue = () => getDayAvailability ? getDayAvailability(metric, 'thursday') : metric.value;
-  const getFridayValue = () => getDayAvailability ? getDayAvailability(metric, 'friday') : metric.value;
+  // Get day-specific values for all metrics
+  const getMondayValue = () => getDayValue ? getDayValue(metric, 'monday') : metric.value;
+  const getTuesdayValue = () => getDayValue ? getDayValue(metric, 'tuesday') : metric.value;
+  const getWednesdayValue = () => getDayValue ? getDayValue(metric, 'wednesday') : metric.value;
+  const getThursdayValue = () => getDayValue ? getDayValue(metric, 'thursday') : metric.value;
+  const getFridayValue = () => getDayValue ? getDayValue(metric, 'friday') : metric.value;
   
   // Determine which day of the week to show for daily view
   const getDayOfWeek = () => {
@@ -70,7 +72,7 @@ const MetricRow = ({
   const handleAvailabilityEdit = (day?: keyof Metric['status']) => {
     if (day) {
       // Edit specific day's availability in weekly view
-      const value = getDayAvailability ? getDayAvailability(metric, day) : metric.value;
+      const value = getDayValue ? getDayValue(metric, day) : metric.value;
       setTempAvailability(value?.toString() || metric.value.toString());
       setEditingDay(day);
     } else {
@@ -99,48 +101,51 @@ const MetricRow = ({
     }
   };
 
-  // Helper for rendering availability in a day cell
+  // Helper for rendering availability/value in a day cell
   const renderDayAvailability = (day: keyof Metric['status']) => {
-    if (metric.category !== "AVAILABILITY") return null;
-    
-    const value = getDayAvailability ? getDayAvailability(metric, day) : metric.value;
-    
-    if (isEditingAvailability && editingDay === day) {
+    if (metric.category === "AVAILABILITY") {
+      const value = getDayValue ? getDayValue(metric, day) : metric.value;
+      
+      if (isEditingAvailability && editingDay === day) {
+        return (
+          <div className="mt-2 flex items-center justify-center">
+            <Input
+              value={tempAvailability}
+              onChange={(e) => setTempAvailability(e.target.value)}
+              className="h-6 text-xs w-16 mx-auto"
+              onBlur={handleAvailabilitySave}
+              onKeyDown={handleAvailabilityKeyDown}
+              autoFocus
+            />
+          </div>
+        );
+      }
+      
       return (
         <div className="mt-2 flex items-center justify-center">
-          <Input
-            value={tempAvailability}
-            onChange={(e) => setTempAvailability(e.target.value)}
-            className="h-6 text-xs w-16 mx-auto"
-            onBlur={handleAvailabilitySave}
-            onKeyDown={handleAvailabilityKeyDown}
-            autoFocus
-          />
+          <div className="flex items-center gap-1 text-sm">
+            <span>{value}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              onClick={() => handleAvailabilityEdit(day)}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       );
     }
     
-    return (
-      <div className="mt-2 flex items-center justify-center">
-        <div className="flex items-center gap-1 text-sm">
-          <span>{value}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0"
-            onClick={() => handleAvailabilityEdit(day)}
-          >
-            <Edit2 className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   };
 
-  // New function to handle day-specific value editing for all metrics
+  // Function to handle day-specific value editing for all metrics
   const handleDayValueEdit = (day: keyof Metric['status']) => {
     setEditingDay(day);
-    setEditingDayValue(metric.value.toString());
+    const value = getDayValue ? getDayValue(metric, day) : metric.value;
+    setEditingDayValue(value?.toString() || metric.value.toString());
   };
 
   const handleDayValueSave = () => {
@@ -167,6 +172,8 @@ const MetricRow = ({
       return renderDayAvailability(day);
     }
 
+    const value = getDayValue ? getDayValue(metric, day) : metric.value;
+
     if (editingDay === day) {
       return (
         <div className="mt-2 flex items-center justify-center">
@@ -185,7 +192,8 @@ const MetricRow = ({
     if (viewMode === 'weekly') {
       return (
         <div className="mt-1 flex items-center justify-center">
-          <div className="flex items-center gap-1 text-xs">
+          <div className="flex items-center gap-1 text-sm">
+            <span>{value}</span>
             <Button
               variant="ghost"
               size="sm"

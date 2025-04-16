@@ -26,7 +26,8 @@ const MetricsTable = () => {
     handleAvailabilityChange,
     toggleExpanded,
     getMetricColor,
-    getDayAvailability
+    getDayAvailability,
+    getDayValue
   } = useMetricsData(dateKey, viewMode);
 
   return (
@@ -76,6 +77,7 @@ const MetricsTable = () => {
               getMetricColor={getMetricColor}
               viewMode={viewMode}
               getDayAvailability={getDayAvailability}
+              getDayValue={getDayValue}
             />
           ))}
         </TableBody>
