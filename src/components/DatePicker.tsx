@@ -42,9 +42,7 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
   };
 
   // For weekly view, we want to prepare the range of dates for the week
-  const getDateRange = (): DateRange | undefined => {
-    if (viewMode !== 'weekly') return undefined;
-    
+  const getDateRange = (): DateRange => {
     const start = startOfWeek(date, { weekStartsOn: 1 });
     const end = endOfWeek(date, { weekStartsOn: 1 });
     
@@ -66,27 +64,30 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode={viewMode === 'weekly' ? "range" : "single"}
-          selected={viewMode === 'weekly' ? getDateRange() : date}
-          onSelect={(newSelection) => {
-            if (!newSelection) return;
-            if (viewMode === 'weekly') {
-              // For range selection, take the first date of the range
-              if ('from' in newSelection && newSelection.from) {
-                handleSelect(newSelection.from);
-              }
-            } else {
-              // For single date selection
-              handleSelect(newSelection as Date);
-            }
-          }}
-          initialFocus
-          showOutsideDays={viewMode === 'weekly'}
-          weekStartsOn={1}
-          className={cn("p-3 pointer-events-auto")}
-          showWeekNumber={viewMode === 'weekly'}
-        />
+        {viewMode === 'weekly' ? (
+          <Calendar
+            mode="range"
+            selected={getDateRange()}
+            onSelect={(newSelection) => {
+              if (!newSelection || !('from' in newSelection) || !newSelection.from) return;
+              handleSelect(newSelection.from);
+            }}
+            initialFocus
+            showOutsideDays
+            weekStartsOn={1}
+            className={cn("p-3 pointer-events-auto")}
+            showWeekNumber
+          />
+        ) : (
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
+            initialFocus
+            weekStartsOn={1}
+            className={cn("p-3 pointer-events-auto")}
+          />
+        )}
       </PopoverContent>
     </Popover>
   );
