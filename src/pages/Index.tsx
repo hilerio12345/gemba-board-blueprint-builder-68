@@ -54,6 +54,7 @@ const GembaContent = () => {
             <DatePicker 
               date={currentDate}
               onDateChange={setCurrentDate}
+              viewMode={viewMode}
             />
             <div className="flex gap-2 flex-wrap">
               <ExportOptions />
