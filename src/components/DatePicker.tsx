@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { DateRange } from "react-day-picker";
 
 interface DatePickerProps {
   date: Date;
@@ -41,18 +42,13 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
   };
 
   // For weekly view, we want to prepare the range of dates for the week
-  const getDateRange = () => {
+  const getDateRange = (): DateRange | undefined => {
     if (viewMode !== 'weekly') return undefined;
     
     const start = startOfWeek(date, { weekStartsOn: 1 });
-    const range = [];
+    const end = endOfWeek(date, { weekStartsOn: 1 });
     
-    // Create a 7-day range starting from Monday
-    for (let i = 0; i < 7; i++) {
-      range.push(addDays(start, i));
-    }
-    
-    return range;
+    return { from: start, to: end };
   };
 
   return (
@@ -73,7 +69,18 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
         <Calendar
           mode={viewMode === 'weekly' ? "range" : "single"}
           selected={viewMode === 'weekly' ? getDateRange() : date}
-          onSelect={(newDate) => handleSelect(Array.isArray(newDate) ? newDate[0] : newDate)}
+          onSelect={(newSelection) => {
+            if (!newSelection) return;
+            if (viewMode === 'weekly') {
+              // For range selection, take the first date of the range
+              if ('from' in newSelection && newSelection.from) {
+                handleSelect(newSelection.from);
+              }
+            } else {
+              // For single date selection
+              handleSelect(newSelection as Date);
+            }
+          }}
           initialFocus
           showOutsideDays={viewMode === 'weekly'}
           weekStartsOn={1}
