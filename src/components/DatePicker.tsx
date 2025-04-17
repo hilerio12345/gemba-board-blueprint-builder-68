@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,34 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
     }
     return format(date, "MMMM d, yyyy");
   };
+  
+  const handleSelect = (newDate: Date | undefined) => {
+    if (!newDate) return;
+    
+    if (viewMode === 'weekly') {
+      // When in weekly mode, select the entire week
+      const weekStart = startOfWeek(newDate, { weekStartsOn: 1 });
+      onDateChange(weekStart);
+    } else {
+      // In daily mode, just select the day
+      onDateChange(newDate);
+    }
+  };
+
+  // For weekly view, we want to prepare the range of dates for the week
+  const getDateRange = () => {
+    if (viewMode !== 'weekly') return undefined;
+    
+    const start = startOfWeek(date, { weekStartsOn: 1 });
+    const range = [];
+    
+    // Create a 7-day range starting from Monday
+    for (let i = 0; i < 7; i++) {
+      range.push(addDays(start, i));
+    }
+    
+    return range;
+  };
 
   return (
     <Popover>
@@ -43,14 +71,13 @@ const DatePicker = ({ date, onDateChange, viewMode = 'daily' }: DatePickerProps)
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          mode={viewMode === 'weekly' ? "single" : "single"}
-          selected={date}
-          onSelect={(newDate) => newDate && onDateChange(newDate)}
+          mode={viewMode === 'weekly' ? "range" : "single"}
+          selected={viewMode === 'weekly' ? getDateRange() : date}
+          onSelect={(newDate) => handleSelect(Array.isArray(newDate) ? newDate[0] : newDate)}
           initialFocus
           showOutsideDays={viewMode === 'weekly'}
           weekStartsOn={1}
           className={cn("p-3 pointer-events-auto")}
-          ISOWeek={viewMode === 'weekly'}
           showWeekNumber={viewMode === 'weekly'}
         />
       </PopoverContent>
