@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -172,35 +171,34 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
 
               <div className="bg-gray-50 rounded-lg p-4 mt-2">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Threshold Visualization</h4>
-                {/* Completely redesigned threshold visualization with individual separate blocks */}
-                <div className="mb-3">
-                  <div className="w-full h-4 bg-red-500 rounded-md mb-1"></div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Red threshold: {parameter.redThreshold || "< 85%"}</span>
+                
+                <div className="space-y-6">
+                  <div className="relative">
+                    <div className="w-full h-8 bg-green-500 rounded-md flex items-center px-3">
+                      <span className="font-medium text-white">Green Threshold</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      {parameter.greenThreshold || "≥ 95%"} - Values {parameter.category === "COST" ? "below" : "at or above"} this level are considered good.
+                    </div>
                   </div>
-                </div>
-                <div className="mb-3">
-                  <div className="w-full h-4 bg-yellow-400 rounded-md mb-1"></div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Yellow threshold: {parameter.yellowThreshold || "85-94%"}</span>
+                  
+                  <div className="relative">
+                    <div className="w-full h-8 bg-yellow-400 rounded-md flex items-center px-3">
+                      <span className="font-medium text-black">Yellow Threshold</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      {parameter.yellowThreshold || "85-94%"} - Values in this range require attention.
+                    </div>
                   </div>
-                </div>
-                <div className="mb-1">
-                  <div className="w-full h-4 bg-green-500 rounded-md mb-1"></div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Green threshold: {parameter.greenThreshold || "≥ 95%"}</span>
+                  
+                  <div className="relative">
+                    <div className="w-full h-8 bg-red-500 rounded-md flex items-center px-3">
+                      <span className="font-medium text-white">Red Threshold</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      {parameter.redThreshold || "< 85%"} - Values {parameter.category === "COST" ? "above" : "below"} this level indicate problems.
+                    </div>
                   </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-4">
-                  <p className="mb-1">
-                    <span className="font-medium">Green threshold:</span> Values {parameter.category === "COST" ? "below" : "at or above"} this level are considered good.
-                  </p>
-                  <p className="mb-1">
-                    <span className="font-medium">Yellow threshold:</span> Values in this range require attention.
-                  </p>
-                  <p>
-                    <span className="font-medium">Red threshold:</span> Values {parameter.category === "COST" ? "above" : "below"} this level indicate problems.
-                  </p>
                 </div>
               </div>
             </div>
@@ -217,4 +215,3 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
 };
 
 export default MetricParametersDialog;
-
