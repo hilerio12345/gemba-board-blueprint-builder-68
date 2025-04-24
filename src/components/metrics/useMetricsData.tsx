@@ -4,15 +4,79 @@ import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsS
 import { MetricParameter } from "../MetricParametersDialog";
 import { useToast } from "@/hooks/use-toast";
 
-export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | 'monthly' = 'weekly') => {
+export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | 'monthly' = 'weekly', tierLevel: number = 1) => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
-    const loadedMetrics = getMetricsForDate(dateKey);
+    let loadedMetrics = getMetricsForDate(dateKey);
+    
+    if (tierLevel > 1) {
+      loadedMetrics = loadedMetrics.map(metric => {
+        const tierMultiplier = 1 + ((tierLevel - 1) * 0.025);
+        let newValue = metric.value;
+        
+        switch (metric.category) {
+          case "AVAILABILITY":
+            newValue = Math.min(99.9, metric.value * tierMultiplier);
+            break;
+          case "DELIVERY":
+            if (metric.goal.includes("<")) {
+              newValue = Math.max(1, metric.value / tierMultiplier);
+            } else {
+              newValue = Math.min(10, metric.value * tierMultiplier);
+            }
+            break;
+          case "QUALITY":
+            newValue = Math.min(99, metric.value * tierMultiplier);
+            break;
+          case "COST":
+            if (metric.goal.includes("<")) {
+              newValue = Math.max(1, metric.value / tierMultiplier);
+            } else {
+              newValue = metric.value * tierMultiplier;
+            }
+            break;
+          case "PEOPLE":
+            newValue = Math.min(99, metric.value * tierMultiplier);
+            break;
+        }
+        
+        let dayValues = { ...metric.dayValues };
+        if (dayValues) {
+          Object.keys(dayValues).forEach(day => {
+            const dayKey = day as keyof typeof dayValues;
+            if (dayValues[dayKey] !== undefined) {
+              const variance = Math.random() * 0.1 - 0.05;
+              dayValues[dayKey] = Math.round((newValue * (1 + variance)) * 10) / 10;
+            }
+          });
+        }
+        
+        let availability = { ...metric.availability };
+        if (availability && metric.category === "AVAILABILITY") {
+          Object.keys(availability).forEach(day => {
+            const dayKey = day as keyof typeof availability;
+            if (availability[dayKey] !== undefined) {
+              const variance = Math.random() * 0.05;
+              availability[dayKey] = Math.min(100, Math.round((newValue * (1 + variance)) * 10) / 10);
+            }
+          });
+        }
+        
+        return {
+          ...metric,
+          value: Math.round(newValue * 10) / 10,
+          dayValues: dayValues as Metric['dayValues'],
+          availability: availability as Metric['availability'],
+          notes: metric.notes + (tierLevel > 1 ? ` (Tier ${tierLevel} aggregated)` : '')
+        };
+      });
+    }
+    
     setMetrics(loadedMetrics);
-  }, [dateKey]);
+  }, [dateKey, tierLevel]);
 
   const calculateStatusColor = (metric: Metric, value: number): string => {
     const parseThreshold = (threshold: string | undefined): number | null => {
@@ -187,7 +251,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     });
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
   };
 
   const handleNotesChange = (metricId: string, value: string) => {
@@ -202,7 +268,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     });
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
   };
 
   const handleParametersUpdate = (parameters: MetricParameter[]) => {
@@ -225,7 +293,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     });
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
     
     toast({
       title: "All parameters updated",
@@ -278,7 +348,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     updatedMetrics = updateStatusBasedOnValues(updatedMetrics);
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
   };
 
   const handleAvailabilityChange = (metricId: string, value: number, day?: keyof Metric['status']) => {
@@ -356,7 +428,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     updatedMetrics = updateStatusBasedOnValues(updatedMetrics);
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
     
     const metricType = metrics.find(m => m.id === metricId)?.category || "metric";
     
@@ -380,7 +454,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     });
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
     
     toast({
       title: "Threshold updated",
@@ -400,7 +476,9 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     });
     
     setMetrics(updatedMetrics);
-    updateMetricsForDate(dateKey, updatedMetrics);
+    if (tierLevel === 1) {
+      updateMetricsForDate(dateKey, updatedMetrics);
+    }
     
     toast({
       title: "Goal updated",

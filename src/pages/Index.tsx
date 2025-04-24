@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import MetricsTable from "@/components/MetricsTable";
@@ -7,7 +8,8 @@ import DatePicker from "@/components/DatePicker";
 import { DateProvider, useDateContext } from "@/contexts/DateContext";
 import { generateHistoricalDataIfNeeded } from "@/services/metricsService";
 import ExportOptions from "@/components/ExportOptions";
-import { CalendarDays, Calendar } from "lucide-react";
+import { CalendarDays, Calendar, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const ViewModeContext = React.createContext<{
   viewMode: 'daily' | 'weekly' | 'monthly';
@@ -17,14 +19,43 @@ export const ViewModeContext = React.createContext<{
   setViewMode: () => {},
 });
 
+// Helper function to get initials from a line of production
+const getInitialsFromLine = (line: string): string => {
+  return line
+    .split(" ")
+    .map(word => word.charAt(0))
+    .join("")
+    .toUpperCase();
+};
+
+// Function to generate a board ID based on tier and type
+const generateBoardId = (baseTier: string, type: string): string => {
+  const random = Math.floor(1000 + Math.random() * 9000); // Generates a number between 1000-9999
+  return `${baseTier}-${type}-${random}`;
+};
+
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const { currentTier, setCurrentTier } = useTierConfig();
+  const [aggregatedData, setAggregatedData] = useState<{
+    availability: number;
+    delivery: number;
+    quality: number;
+    cost: number;
+    people: number;
+  }>({
+    availability: 0,
+    delivery: 0,
+    quality: 0,
+    cost: 0,
+    people: 0
+  });
   
   useEffect(() => {
     generateHistoricalDataIfNeeded();
-  }, []);
+    generateAggregatedData();
+  }, [currentTier.tier]);
 
   const getDayOfWeekText = () => {
     const day = currentDate.getDay();
@@ -38,88 +69,256 @@ const GembaContent = () => {
   };
 
   const handleBoardClick = (boardId: string) => {
-    const [tierPrefix, type] = boardId.split('-');
-    const tier = `TIER ${tierPrefix.replace('T', '')}`;
+    const parts = boardId.split('-');
+    if (parts.length >= 2) {
+      const tierPrefix = parts[0];
+      const type = parts[1];
+      
+      // Convert T1 to TIER 1, etc.
+      const tier = `TIER ${tierPrefix.replace('T', '')}`;
+      
+      let lineOfProduction = "STANDARD DD214s";
+      if (type === "STD") lineOfProduction = "STANDARD DD214s";
+      else if (type === "EXP") lineOfProduction = "EXPRESS DD214s";
+      else if (type === "URG") lineOfProduction = "URGENT DD214s";
+      
+      const newTierConfig = {
+        tier,
+        lineOfProduction,
+        boardId
+      };
+      
+      setCurrentTier(newTierConfig);
+    }
+  };
+  
+  // Generate aggregated data for higher tiers
+  const generateAggregatedData = () => {
+    // In a real application, this would pull data from all lower tier boards
+    // For this demo, we'll simulate aggregated metrics
+    const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
     
-    const newTierConfig = {
-      tier,
-      lineOfProduction: type === 'STD' ? 'STANDARD DD214s' : 
-                        type === 'EXP' ? 'EXPRESS DD214s' : 
-                        type === 'URG' ? 'URGENT DD214s' : 'STANDARD DD214s',
-      boardId
-    };
+    // Higher tiers should have slightly better metrics as they aggregate and optimize
+    const multiplier = (tierLevel - 1) * 0.02 + 1; // 2% improvement per tier level
     
-    setCurrentTier(newTierConfig);
+    setAggregatedData({
+      availability: Math.min(99.5, 97 * multiplier),
+      delivery: Math.min(5, 3 * multiplier),
+      quality: Math.min(85, 78 * multiplier),
+      cost: Math.max(3.5, 4.2 / multiplier),
+      people: Math.min(97, 92 * multiplier)
+    });
   };
 
+  // Render boards for parent-child relationships
   const renderMultiBoardView = () => {
-    if (currentTier.tier !== "TIER 1") {
+    const tierNum = parseInt(currentTier.tier.replace('TIER ', ''));
+    
+    if (tierNum > 1) {
       return (
         <Card className="shadow-md mb-6">
           <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
-            <CardTitle className="text-gray-700">
-              {currentTier.tier} Overview - Connected Boards
+            <CardTitle className="text-gray-700 flex justify-between items-center">
+              {tierNum > 1 && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => handleNavToParentTier()}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Return to Tier {tierNum - 1}
+                </Button>
+              )}
+              <span>{currentTier.tier} Overview - Connected Boards</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <button
-                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
-                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD"))}
-                  className="text-left w-full"
-                >
-                  <h3 className="font-medium hover:text-blue-600 transition-colors">
-                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
-                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD")}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {currentTier.tier === "TIER 2" ? "Standard DD214s" : 
-                     currentTier.tier === "TIER 3" ? "Section A" : "Region 1"}
-                  </p>
-                  <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Aggregated metrics summary */}
+              <div className="col-span-full bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                <h3 className="font-medium mb-2">Aggregated Metrics</h3>
+                <div className="grid grid-cols-5 gap-2 text-sm">
+                  <div>
+                    <p className="font-bold text-blue-600">AVAILABILITY</p>
+                    <p className="text-lg">{aggregatedData.availability.toFixed(1)}%</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-purple-600">DELIVERY</p>
+                    <p className="text-lg">{aggregatedData.delivery.toFixed(1)}</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-green-600">QUALITY</p>
+                    <p className="text-lg">{aggregatedData.quality.toFixed(1)}%</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-orange-600">COST</p>
+                    <p className="text-lg">{aggregatedData.cost.toFixed(1)}%</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-indigo-600">PEOPLE</p>
+                    <p className="text-lg">{aggregatedData.people.toFixed(1)}%</p>
+                  </div>
+                </div>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <button
-                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
-                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD"))}
-                  className="text-left w-full"
-                >
-                  <h3 className="font-medium hover:text-blue-600 transition-colors">
-                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
-                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD")}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {currentTier.tier === "TIER 2" ? "Express DD214s" : 
-                     currentTier.tier === "TIER 3" ? "Section B" : "Region 2"}
-                  </p>
-                  <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
-                </button>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <button
-                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
-                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD"))}
-                  className="text-left w-full"
-                >
-                  <h3 className="font-medium hover:text-blue-600 transition-colors">
-                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
-                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD")}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {currentTier.tier === "TIER 2" ? "Urgent DD214s" : 
-                     currentTier.tier === "TIER 3" ? "Section C" : "Region 3"}
-                  </p>
-                  <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
-                </button>
-              </div>
+              
+              {/* Connected boards for this tier */}
+              {renderConnectedBoards(tierNum)}
             </div>
           </CardContent>
         </Card>
       );
     }
     return null;
+  };
+  
+  const renderConnectedBoards = (tierNum: number) => {
+    // For Tier 2, show Tier 1 boards
+    if (tierNum === 2) {
+      return (
+        <>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T1", "STD"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T1", "STD")}
+              </h3>
+              <p className="text-sm text-gray-500">Standard DD214s</p>
+              <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T1", "EXP"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T1", "EXP")}
+              </h3>
+              <p className="text-sm text-gray-500">Express DD214s</p>
+              <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T1", "URG"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T1", "URG")}
+              </h3>
+              <p className="text-sm text-gray-500">Urgent DD214s</p>
+              <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+            </button>
+          </div>
+        </>
+      );
+    }
+    // For Tier 3, show Tier 2 sections
+    else if (tierNum === 3) {
+      return (
+        <>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T2", "STD"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T2", "STD")}
+              </h3>
+              <p className="text-sm text-gray-500">Section A</p>
+              <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T2", "EXP"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T2", "EXP")}
+              </h3>
+              <p className="text-sm text-gray-500">Section B</p>
+              <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T2", "URG"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T2", "URG")}
+              </h3>
+              <p className="text-sm text-gray-500">Section C</p>
+              <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+            </button>
+          </div>
+        </>
+      );
+    }
+    // For Tier 4, show Tier 3 regions
+    else if (tierNum === 4) {
+      return (
+        <>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T3", "STD"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T3", "STD")}
+              </h3>
+              <p className="text-sm text-gray-500">Region 1</p>
+              <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T3", "STD"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T3", "STD")}
+              </h3>
+              <p className="text-sm text-gray-500">Region 2</p>
+              <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+            </button>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <button
+              onClick={() => handleBoardClick(generateBoardId("T3", "STD"))}
+              className="text-left w-full"
+            >
+              <h3 className="font-medium hover:text-blue-600 transition-colors">
+                Board #{generateBoardId("T3", "STD")}
+              </h3>
+              <p className="text-sm text-gray-500">Region 3</p>
+              <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+            </button>
+          </div>
+        </>
+      );
+    }
+    
+    return null;
+  };
+  
+  // Handle navigation to parent tier
+  const handleNavToParentTier = () => {
+    const currentTierNum = parseInt(currentTier.tier.replace('TIER ', ''));
+    if (currentTierNum > 1) {
+      const parentTier = `TIER ${currentTierNum - 1}`;
+      const parentBoardId = `T${currentTierNum - 1}-SUMMARY-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      setCurrentTier({
+        tier: parentTier,
+        lineOfProduction: "TIER SUMMARY",
+        boardId: parentBoardId
+      });
+    }
   };
 
   return (

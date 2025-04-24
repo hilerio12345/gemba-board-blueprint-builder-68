@@ -10,10 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Calendar } from "lucide-react";
 import MonthlyView from "./metrics/MonthlyView";
 import { ViewModeContext } from "../pages/Index";
+import { useTierConfig } from "./Header";
 
 const MetricsTable = () => {
   const { dateKey } = useDateContext();
   const { viewMode, setViewMode } = useContext(ViewModeContext);
+  const { currentTier } = useTierConfig();
+  const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
   
   const {
     metrics,
@@ -30,7 +33,7 @@ const MetricsTable = () => {
     getMetricColor,
     getDayAvailability,
     getDayValue
-  } = useMetricsData(dateKey, viewMode);
+  } = useMetricsData(dateKey, viewMode, tierLevel);
 
   return (
     <div className="overflow-x-auto">
@@ -95,6 +98,12 @@ const MetricsTable = () => {
             ))}
           </TableBody>
         </Table>
+      )}
+      
+      {tierLevel > 1 && (
+        <div className="mt-4 text-xs text-gray-600 p-2 bg-gray-100 rounded-md">
+          <p>* Note: These metrics represent an aggregation of all Tier {tierLevel-1} boards.</p>
+        </div>
       )}
     </div>
   );
