@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -14,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 export interface MetricParameter {
   category: string;
@@ -21,6 +21,8 @@ export interface MetricParameter {
   greenThreshold?: string;
   yellowThreshold?: string;
   redThreshold?: string;
+  graphView?: 'weekly' | 'monthly';
+  graphType?: 'line' | 'bar';
 }
 
 interface MetricParametersDialogProps {
@@ -28,15 +30,11 @@ interface MetricParametersDialogProps {
   onParametersUpdate: (parameters: MetricParameter[]) => void;
 }
 
-const MetricParametersDialog = ({ 
-  initialParameters, 
-  onParametersUpdate 
-}: MetricParametersDialogProps) => {
+const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: MetricParametersDialogProps) => {
   const [parameters, setParameters] = useState<MetricParameter[]>(initialParameters);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  // Update local parameters when initialParameters change
   useEffect(() => {
     setParameters(initialParameters);
   }, [initialParameters]);
@@ -82,7 +80,7 @@ const MetricParametersDialog = ({
         <DialogHeader>
           <DialogTitle>Metric Parameters</DialogTitle>
           <DialogDescription>
-            Configure the goal and threshold parameters for each metric category.
+            Configure the goal, threshold parameters, and graph settings for each metric category.
           </DialogDescription>
         </DialogHeader>
         
@@ -134,6 +132,40 @@ const MetricParametersDialog = ({
                       onChange={(e) => handleParameterChange(index, "redThreshold", e.target.value)}
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="col-span-2 grid grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="space-y-2">
+                  <Label>Graph View</Label>
+                  <Select
+                    value={parameter.graphView || 'weekly'}
+                    onValueChange={(value) => handleParameterChange(index, 'graphView', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Graph Type</Label>
+                  <Select
+                    value={parameter.graphType || 'line'}
+                    onValueChange={(value) => handleParameterChange(index, 'graphType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="line">Line Graph</SelectItem>
+                      <SelectItem value="bar">Bar Chart</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
