@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -171,10 +172,10 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
 
               <div className="bg-gray-50 rounded-lg p-4 mt-2">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Threshold Visualization</h4>
-                <div className="flex h-2 mb-1 space-x-1">
-                  <div className="w-1/3 bg-red-500 rounded"></div>
-                  <div className="w-1/3 bg-yellow-400 rounded"></div>
-                  <div className="w-1/3 bg-green-500 rounded"></div>
+                <div className="flex h-2 mb-1 gap-1">
+                  <div className="flex-1 bg-red-500 rounded"></div>
+                  <div className="flex-1 bg-yellow-400 rounded"></div>
+                  <div className="flex-1 bg-green-500 rounded"></div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>Low</span>
