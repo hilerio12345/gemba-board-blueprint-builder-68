@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useContext } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
 import { useDateContext } from "../contexts/DateContext";
@@ -9,10 +9,11 @@ import { useMetricsData } from "./metrics/useMetricsData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Calendar } from "lucide-react";
 import MonthlyView from "./metrics/MonthlyView";
+import { ViewModeContext } from "../pages/Index";
 
 const MetricsTable = () => {
   const { dateKey } = useDateContext();
-  const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const { viewMode, setViewMode } = useContext(ViewModeContext);
   
   const {
     metrics,
@@ -34,7 +35,11 @@ const MetricsTable = () => {
   return (
     <div className="overflow-x-auto">
       <div className="mb-4 flex justify-between items-center">
-        <Tabs defaultValue="weekly" onValueChange={(value) => setViewMode(value as 'daily' | 'weekly' | 'monthly')} className="w-[400px]">
+        <Tabs 
+          value={viewMode} 
+          onValueChange={(value) => setViewMode(value as 'daily' | 'weekly' | 'monthly')} 
+          className="w-[400px]"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="daily" className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
