@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -171,15 +172,24 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
 
               <div className="bg-gray-50 rounded-lg p-4 mt-2">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Threshold Visualization</h4>
-                <div className="grid grid-cols-3 h-3 mb-1 gap-2">
-                  <div className="bg-red-500 rounded-md"></div>
-                  <div className="bg-yellow-400 rounded-md"></div>
-                  <div className="bg-green-500 rounded-md"></div>
+                {/* Completely redesigned threshold visualization with individual separate blocks */}
+                <div className="mb-3">
+                  <div className="w-full h-4 bg-red-500 rounded-md mb-1"></div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Red threshold: {parameter.redThreshold || "< 85%"}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Low</span>
-                  <span>Medium</span>
-                  <span>High</span>
+                <div className="mb-3">
+                  <div className="w-full h-4 bg-yellow-400 rounded-md mb-1"></div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Yellow threshold: {parameter.yellowThreshold || "85-94%"}</span>
+                  </div>
+                </div>
+                <div className="mb-1">
+                  <div className="w-full h-4 bg-green-500 rounded-md mb-1"></div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Green threshold: {parameter.greenThreshold || "≥ 95%"}</span>
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-4">
                   <p className="mb-1">
@@ -207,3 +217,4 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
 };
 
 export default MetricParametersDialog;
+
