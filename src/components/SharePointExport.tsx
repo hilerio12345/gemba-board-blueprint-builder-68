@@ -299,7 +299,7 @@ const SharePointExport = () => {
                         !date && "text-muted-foreground"
                       )}
                     >
-                      <FileExcel className="mr-2 h-4 w-4" />
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
                       {date?.from ? (
                         date.to ? (
                           <>
@@ -333,7 +333,7 @@ const SharePointExport = () => {
                 disabled={!date?.from || !date?.to}
                 className="w-full"
               >
-                <FileExcel className="mr-2 h-4 w-4" />
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Export to Excel
               </Button>
             </div>
