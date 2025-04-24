@@ -20,7 +20,7 @@ export const ViewModeContext = React.createContext<{
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const { currentTier } = useTierConfig();
+  const { currentTier, setCurrentTier } = useTierConfig();
   
   useEffect(() => {
     generateHistoricalDataIfNeeded();
@@ -37,6 +37,21 @@ const GembaContent = () => {
     return `${baseTier}-${type}-${random}`;
   };
 
+  const handleBoardClick = (boardId: string) => {
+    const [tierPrefix, type] = boardId.split('-');
+    const tier = `TIER ${tierPrefix.replace('T', '')}`;
+    
+    const newTierConfig = {
+      tier,
+      lineOfProduction: type === 'STD' ? 'STANDARD DD214s' : 
+                        type === 'EXP' ? 'EXPRESS DD214s' : 
+                        type === 'URG' ? 'URGENT DD214s' : 'STANDARD DD214s',
+      boardId
+    };
+    
+    setCurrentTier(newTierConfig);
+  };
+
   const renderMultiBoardView = () => {
     if (currentTier.tier !== "TIER 1") {
       return (
@@ -49,25 +64,55 @@ const GembaContent = () => {
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
-                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD")}</h3>
-                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Standard DD214s" : 
-                                                     currentTier.tier === "TIER 3" ? "Section A" : "Region 1"}</p>
-                <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+                <button
+                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
+                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD"))}
+                  className="text-left w-full"
+                >
+                  <h3 className="font-medium hover:text-blue-600 transition-colors">
+                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
+                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD")}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {currentTier.tier === "TIER 2" ? "Standard DD214s" : 
+                     currentTier.tier === "TIER 3" ? "Section A" : "Region 1"}
+                  </p>
+                  <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+                </button>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
-                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD")}</h3>
-                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Express DD214s" : 
-                                                     currentTier.tier === "TIER 3" ? "Section B" : "Region 2"}</p>
-                <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+                <button
+                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
+                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD"))}
+                  className="text-left w-full"
+                >
+                  <h3 className="font-medium hover:text-blue-600 transition-colors">
+                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
+                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD")}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {currentTier.tier === "TIER 2" ? "Express DD214s" : 
+                     currentTier.tier === "TIER 3" ? "Section B" : "Region 2"}
+                  </p>
+                  <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+                </button>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
-                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD")}</h3>
-                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Urgent DD214s" : 
-                                                     currentTier.tier === "TIER 3" ? "Section C" : "Region 3"}</p>
-                <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+                <button
+                  onClick={() => handleBoardClick(currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
+                                                currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD"))}
+                  className="text-left w-full"
+                >
+                  <h3 className="font-medium hover:text-blue-600 transition-colors">
+                    Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
+                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD")}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {currentTier.tier === "TIER 2" ? "Urgent DD214s" : 
+                     currentTier.tier === "TIER 3" ? "Section C" : "Region 3"}
+                  </p>
+                  <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+                </button>
               </div>
             </div>
           </CardContent>
