@@ -12,10 +12,16 @@ import { Input } from "@/components/ui/input";
 
 const Header = () => {
   const [lineOfProduction, setLineOfProduction] = useState("STANDARD DD214s");
+  const [tier, setTier] = useState("TIER 1");
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTier, setIsEditingTier] = useState(false);
 
   const handleSave = () => {
     setIsEditing(false);
+  };
+
+  const handleTierSave = () => {
+    setIsEditingTier(false);
   };
 
   return (
@@ -35,8 +41,29 @@ const Header = () => {
               <h1 className="text-xl font-bold">Gemba Board</h1>
               <p className="text-sm opacity-75">Lean Management System</p>
             </div>
-            <div className="ml-4 px-3 py-1 bg-blue-700 rounded-md">
-              <span className="font-semibold">TIER 1</span>
+            <div className="ml-4 px-3 py-1 bg-blue-700 rounded-md flex items-center">
+              {isEditingTier ? (
+                <Input
+                  value={tier}
+                  onChange={(e) => setTier(e.target.value)}
+                  className="h-7 text-sm w-24 text-black"
+                  onBlur={handleTierSave}
+                  onKeyDown={(e) => e.key === "Enter" && handleTierSave()}
+                  autoFocus
+                />
+              ) : (
+                <div className="flex items-center">
+                  <span className="font-semibold">{tier}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-1"
+                    onClick={() => setIsEditingTier(true)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           
