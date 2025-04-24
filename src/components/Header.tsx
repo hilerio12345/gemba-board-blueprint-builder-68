@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, createContext, useContext } from "react";
 import { Card } from "@/components/ui/card";
 import { 
   Popover, 
@@ -24,21 +25,40 @@ export interface TierConfig {
 }
 
 // Create a context to share tier information throughout the app
-export const useTierConfig = () => {
+const TierContext = createContext<{
+  currentTier: TierConfig;
+  setCurrentTier: (tier: TierConfig) => void;
+}>({
+  currentTier: {
+    tier: "TIER 1",
+    lineOfProduction: "STANDARD DD214s",
+    boardId: "T1-STD-" + Math.random().toString(36).substring(2, 8)
+  },
+  setCurrentTier: () => {}
+});
+
+export const useTierConfig = () => useContext(TierContext);
+
+export const TierProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTier, setCurrentTier] = useState<TierConfig>({
     tier: "TIER 1",
     lineOfProduction: "STANDARD DD214s",
     boardId: "T1-STD-" + Math.random().toString(36).substring(2, 8)
   });
   
-  return { currentTier, setCurrentTier };
+  return (
+    <TierContext.Provider value={{ currentTier, setCurrentTier }}>
+      {children}
+    </TierContext.Provider>
+  );
 };
 
 const Header = () => {
-  const [lineOfProduction, setLineOfProduction] = useState("STANDARD DD214s");
-  const [tier, setTier] = useState("TIER 1");
+  const { currentTier, setCurrentTier } = useTierConfig();
+  const [lineOfProduction, setLineOfProduction] = useState(currentTier.lineOfProduction);
+  const [tier, setTier] = useState(currentTier.tier);
   const [isEditing, setIsEditing] = useState(false);
-  const [boardId, setBoardId] = useState("");
+  const [boardId, setBoardId] = useState(currentTier.boardId);
   
   useEffect(() => {
     // Generate a board ID based on both tier and line of production
@@ -49,20 +69,19 @@ const Header = () => {
       .join("")
       .toUpperCase();
     const randomId = Math.random().toString(36).substring(2, 6);
-    setBoardId(`${prefix}-${linePrefix}-${randomId}`);
-  }, [tier, lineOfProduction]);
+    const newBoardId = `${prefix}-${linePrefix}-${randomId}`;
+    setBoardId(newBoardId);
+    
+    // Update the context with new tier information
+    setCurrentTier({
+      tier,
+      lineOfProduction,
+      boardId: newBoardId
+    });
+  }, [tier, lineOfProduction, setCurrentTier]);
 
   const handleSave = () => {
     setIsEditing(false);
-    // Regenerate board ID when line of production changes
-    const prefix = tier.replace("TIER ", "T");
-    const linePrefix = lineOfProduction
-      .split(" ")
-      .map(word => word.charAt(0))
-      .join("")
-      .toUpperCase();
-    const randomId = Math.random().toString(36).substring(2, 6);
-    setBoardId(`${prefix}-${linePrefix}-${randomId}`);
   };
 
   const handleTierChange = (value: string) => {
@@ -90,6 +109,7 @@ const Header = () => {
               <Select
                 onValueChange={handleTierChange}
                 defaultValue={tier.split(" ")[1]}
+                value={tier.split(" ")[1]}
               >
                 <SelectTrigger className="border-0 bg-transparent h-7 text-sm w-24 text-white focus:ring-0 focus:ring-offset-0">
                   <SelectValue placeholder={tier} />

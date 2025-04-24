@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import MetricsTable from "@/components/MetricsTable";
 import ActionItemsLog from "@/components/ActionItemsLog";
-import Header from "@/components/Header";
+import Header, { TierProvider, useTierConfig } from "@/components/Header";
 import DatePicker from "@/components/DatePicker";
 import { DateProvider, useDateContext } from "@/contexts/DateContext";
 import { generateHistoricalDataIfNeeded } from "@/services/metricsService";
@@ -13,33 +13,61 @@ import { CalendarDays, Calendar } from "lucide-react";
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [currentTier, setCurrentTier] = useState("TIER 1");
-  const [boardId, setBoardId] = useState("T1-" + Math.random().toString(36).substring(2, 8));
+  const { currentTier } = useTierConfig();
   
   useEffect(() => {
     // Generate historical data on first load
     generateHistoricalDataIfNeeded();
-    
-    // Listen for tier changes from Header component
-    const handleTierChange = (event: CustomEvent) => {
-      if (event.detail) {
-        setCurrentTier(event.detail.tier);
-        setBoardId(event.detail.boardId);
-      }
-    };
-    
-    // Add event listener for tier changes
-    window.addEventListener('tierChange' as any, handleTierChange);
-    
-    return () => {
-      window.removeEventListener('tierChange' as any, handleTierChange);
-    };
   }, []);
 
   const getDayOfWeekText = () => {
     const day = currentDate.getDay();
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return days[day];
+  };
+
+  // Function to render multi-board view for higher tiers
+  const renderMultiBoardView = () => {
+    // This is a placeholder for the multi-board view implementation
+    // For Tier 2, 3, and 4, we'll show a grid of connected boards
+    if (currentTier.tier !== "TIER 1") {
+      return (
+        <Card className="shadow-md mb-6">
+          <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
+            <CardTitle className="text-gray-700">
+              {currentTier.tier} Overview - Connected Boards
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* This would be dynamically populated with connected boards based on tier */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-STD-XXXX" : 
+                                           currentTier.tier === "TIER 3" ? "T2-STD-XXXX" : "T3-STD-XXXX"}</h3>
+                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Standard DD214s" : 
+                                                     currentTier.tier === "TIER 3" ? "Section A" : "Region 1"}</p>
+                <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-EXP-XXXX" : 
+                                           currentTier.tier === "TIER 3" ? "T2-EXP-XXXX" : "T3-STD-XXXX"}</h3>
+                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Express DD214s" : 
+                                                     currentTier.tier === "TIER 3" ? "Section B" : "Region 2"}</p>
+                <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-URG-XXXX" : 
+                                           currentTier.tier === "TIER 3" ? "T2-URG-XXXX" : "T3-STD-XXXX"}</h3>
+                <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Urgent DD214s" : 
+                                                     currentTier.tier === "TIER 3" ? "Section C" : "Region 3"}</p>
+                <div className="mt-2 h-2 bg-red-500 rounded-full"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    return null;
   };
 
   return (
@@ -50,7 +78,7 @@ const GembaContent = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              {currentTier} Gemba Board
+              {currentTier.tier} Gemba Board
               <span className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
                 {viewMode === 'daily' ? (
                   <span className="flex items-center gap-1">
@@ -78,10 +106,16 @@ const GembaContent = () => {
               viewMode={viewMode}
             />
             <div className="flex gap-2 flex-wrap">
-              <ExportOptions currentTier={currentTier} boardId={boardId} />
+              <ExportOptions 
+                currentTier={currentTier.tier} 
+                boardId={currentTier.boardId} 
+              />
             </div>
           </div>
         </div>
+
+        {/* Render multi-board view for higher tiers */}
+        {renderMultiBoardView()}
 
         <Card className="shadow-md mb-6">
           <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
@@ -119,7 +153,7 @@ const GembaContent = () => {
             Electronic Gemba Board for multi-tiered Lean Management System | SharePoint-compatible
           </p>
           <p className="mt-1">
-            Current Board: {currentTier} | ID: {boardId}
+            Current Board: {currentTier.tier} | ID: {currentTier.boardId}
           </p>
         </div>
       </main>
@@ -130,7 +164,9 @@ const GembaContent = () => {
 const Index = () => {
   return (
     <DateProvider>
-      <GembaContent />
+      <TierProvider>
+        <GembaContent />
+      </TierProvider>
     </DateProvider>
   );
 };
