@@ -4,7 +4,7 @@ import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsS
 import { MetricParameter } from "../MetricParametersDialog";
 import { useToast } from "@/hooks/use-toast";
 
-export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' = 'weekly') => {
+export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | 'monthly' = 'weekly') => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const { toast } = useToast();

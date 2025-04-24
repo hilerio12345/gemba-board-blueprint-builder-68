@@ -3,7 +3,7 @@ import React from "react";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface MetricsTableHeaderProps {
-  viewMode?: 'daily' | 'weekly';
+  viewMode?: 'daily' | 'weekly' | 'monthly';
 }
 
 const MetricsTableHeader = ({ viewMode = 'weekly' }: MetricsTableHeaderProps) => {
@@ -20,11 +20,11 @@ const MetricsTableHeader = ({ viewMode = 'weekly' }: MetricsTableHeaderProps) =>
             <TableHead className="text-center border-r">Thursday</TableHead>
             <TableHead className="text-center border-r">Friday</TableHead>
           </>
-        ) : (
+        ) : viewMode === 'daily' ? (
           <TableHead className="text-center border-r">Status</TableHead>
-        )}
+        ) : null}
         
-        <TableHead>Notes</TableHead>
+        {viewMode !== 'monthly' && <TableHead>Notes</TableHead>}
       </TableRow>
     </TableHeader>
   );

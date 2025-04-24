@@ -19,7 +19,7 @@ interface MetricHeaderProps {
   setTempAvailability?: (value: string) => void;
   handleAvailabilitySave?: () => void;
   handleAvailabilityKeyDown?: (e: React.KeyboardEvent) => void;
-  viewMode?: 'daily' | 'weekly';
+  viewMode?: 'daily' | 'weekly' | 'monthly';
 }
 
 const MetricHeader = ({ 

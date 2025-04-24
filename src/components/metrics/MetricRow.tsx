@@ -22,7 +22,7 @@ interface MetricRowProps {
   onAvailabilityChange: (metricId: string, value: number, day?: keyof Metric['status']) => void;
   generateTrendData: (metricId: string) => { day: string; value: number }[];
   getMetricColor: (category: string) => string;
-  viewMode?: 'daily' | 'weekly';
+  viewMode?: 'daily' | 'weekly' | 'monthly';
   getDayAvailability?: (metric: Metric, day: keyof Metric['status']) => number | undefined;
   getDayValue?: (metric: Metric, day: keyof Metric['status']) => number | undefined;
 }

@@ -12,7 +12,7 @@ import { CalendarDays, Calendar } from "lucide-react";
 
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
-  const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('weekly');
+  const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   
   useEffect(() => {
     // Generate historical data on first load
@@ -39,9 +39,13 @@ const GembaContent = () => {
                   <span className="flex items-center gap-1">
                     <CalendarDays className="h-3 w-3" /> Daily View
                   </span>
-                ) : (
+                ) : viewMode === 'weekly' ? (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" /> Weekly View
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Monthly View
                   </span>
                 )}
               </span>
@@ -66,7 +70,8 @@ const GembaContent = () => {
           <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
             <CardTitle className="text-gray-700 flex items-center justify-between">
               <span>
-                {viewMode === 'daily' ? 'Daily Metrics Status' : 'Weekly Metrics Status'}
+                {viewMode === 'daily' ? 'Daily Metrics Status' : 
+                 viewMode === 'weekly' ? 'Weekly Metrics Status' : 'Monthly Metrics Status'}
               </span>
             </CardTitle>
           </CardHeader>
@@ -75,19 +80,21 @@ const GembaContent = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
-          <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
-            <CardTitle className="text-gray-700">CI Action Items</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ActionItemsLog />
-          </CardContent>
-          <CardFooter className="bg-gray-50 text-xs text-gray-500 py-2">
-            <p>
-              No action should be longer than 7 days! - Actions requiring longer timeframes should be broken into smaller steps.
-            </p>
-          </CardFooter>
-        </Card>
+        {viewMode !== 'monthly' && (
+          <Card className="shadow-md">
+            <CardHeader className="bg-gray-100 border-b border-gray-200 py-3">
+              <CardTitle className="text-gray-700">CI Action Items</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ActionItemsLog />
+            </CardContent>
+            <CardFooter className="bg-gray-50 text-xs text-gray-500 py-2">
+              <p>
+                No action should be longer than 7 days! - Actions requiring longer timeframes should be broken into smaller steps.
+              </p>
+            </CardFooter>
+          </Card>
+        )}
 
         <div className="mt-8 text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
           <p>Gemba Board Blueprint Builder | Version 1.0</p>
