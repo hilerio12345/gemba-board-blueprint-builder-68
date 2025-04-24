@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { 
@@ -20,13 +19,16 @@ import {
 export interface TierConfig {
   tier: string;
   boardId: string;
+  lineOfProduction: string;
+  section?: string;
 }
 
 // Create a context to share tier information throughout the app
 export const useTierConfig = () => {
   const [currentTier, setCurrentTier] = useState<TierConfig>({
     tier: "TIER 1",
-    boardId: "T1-" + Math.random().toString(36).substring(2, 8)
+    lineOfProduction: "STANDARD DD214s",
+    boardId: "T1-STD-" + Math.random().toString(36).substring(2, 8)
   });
   
   return { currentTier, setCurrentTier };
@@ -36,27 +38,35 @@ const Header = () => {
   const [lineOfProduction, setLineOfProduction] = useState("STANDARD DD214s");
   const [tier, setTier] = useState("TIER 1");
   const [isEditing, setIsEditing] = useState(false);
-  const [isEditingTier, setIsEditingTier] = useState(false);
   const [boardId, setBoardId] = useState("");
   
   useEffect(() => {
-    // Generate a board ID based on the selected tier
+    // Generate a board ID based on both tier and line of production
     const prefix = tier.replace("TIER ", "T");
-    const randomId = Math.random().toString(36).substring(2, 8);
-    setBoardId(`${prefix}-${randomId}`);
-  }, [tier]);
+    const linePrefix = lineOfProduction
+      .split(" ")
+      .map(word => word.charAt(0))
+      .join("")
+      .toUpperCase();
+    const randomId = Math.random().toString(36).substring(2, 6);
+    setBoardId(`${prefix}-${linePrefix}-${randomId}`);
+  }, [tier, lineOfProduction]);
 
   const handleSave = () => {
     setIsEditing(false);
-  };
-
-  const handleTierSave = () => {
-    setIsEditingTier(false);
+    // Regenerate board ID when line of production changes
+    const prefix = tier.replace("TIER ", "T");
+    const linePrefix = lineOfProduction
+      .split(" ")
+      .map(word => word.charAt(0))
+      .join("")
+      .toUpperCase();
+    const randomId = Math.random().toString(36).substring(2, 6);
+    setBoardId(`${prefix}-${linePrefix}-${randomId}`);
   };
 
   const handleTierChange = (value: string) => {
     setTier(`TIER ${value}`);
-    setIsEditingTier(false);
   };
 
   return (
