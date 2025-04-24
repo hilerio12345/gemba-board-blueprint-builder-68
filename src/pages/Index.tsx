@@ -32,6 +32,11 @@ const GembaContent = () => {
     return days[day];
   };
 
+  const getBoardNumber = (baseTier: string, type: string) => {
+    const random = Math.floor(1000 + Math.random() * 9000); // Generates a number between 1000-9999
+    return `${baseTier}-${type}-${random}`;
+  };
+
   const renderMultiBoardView = () => {
     if (currentTier.tier !== "TIER 1") {
       return (
@@ -44,22 +49,22 @@ const GembaContent = () => {
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-STD-XXXX" : 
-                                           currentTier.tier === "TIER 3" ? "T2-STD-XXXX" : "T3-STD-XXXX"}</h3>
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "STD") : 
+                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "STD") : getBoardNumber("T3", "STD")}</h3>
                 <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Standard DD214s" : 
                                                      currentTier.tier === "TIER 3" ? "Section A" : "Region 1"}</p>
                 <div className="mt-2 h-2 bg-green-500 rounded-full"></div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-EXP-XXXX" : 
-                                           currentTier.tier === "TIER 3" ? "T2-EXP-XXXX" : "T3-STD-XXXX"}</h3>
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "EXP") : 
+                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "EXP") : getBoardNumber("T3", "STD")}</h3>
                 <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Express DD214s" : 
                                                      currentTier.tier === "TIER 3" ? "Section B" : "Region 2"}</p>
                 <div className="mt-2 h-2 bg-yellow-400 rounded-full"></div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-URG-XXXX" : 
-                                           currentTier.tier === "TIER 3" ? "T2-URG-XXXX" : "T3-STD-XXXX"}</h3>
+                <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? getBoardNumber("T1", "URG") : 
+                                           currentTier.tier === "TIER 3" ? getBoardNumber("T2", "URG") : getBoardNumber("T3", "STD")}</h3>
                 <p className="text-sm text-gray-500">{currentTier.tier === "TIER 2" ? "Urgent DD214s" : 
                                                      currentTier.tier === "TIER 3" ? "Section C" : "Region 3"}</p>
                 <div className="mt-2 h-2 bg-red-500 rounded-full"></div>

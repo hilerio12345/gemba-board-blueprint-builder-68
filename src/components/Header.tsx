@@ -1,5 +1,4 @@
-
-import { useState, useEffect, createContext, useContext } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { Card } from "@/components/ui/card";
 import { 
   Popover, 
@@ -24,7 +23,6 @@ export interface TierConfig {
   section?: string;
 }
 
-// Create a context to share tier information throughout the app
 const TierContext = createContext<{
   currentTier: TierConfig;
   setCurrentTier: (tier: TierConfig) => void;
@@ -59,9 +57,10 @@ const Header = () => {
   const [tier, setTier] = useState(currentTier.tier);
   const [isEditing, setIsEditing] = useState(false);
   const [boardId, setBoardId] = useState(currentTier.boardId);
+  const [briefingTime, setBriefingTime] = useState("0830");
+  const [isEditingBriefing, setIsEditingBriefing] = useState(false);
   
   useEffect(() => {
-    // Generate a board ID based on both tier and line of production
     const prefix = tier.replace("TIER ", "T");
     const linePrefix = lineOfProduction
       .split(" ")
@@ -72,7 +71,6 @@ const Header = () => {
     const newBoardId = `${prefix}-${linePrefix}-${randomId}`;
     setBoardId(newBoardId);
     
-    // Update the context with new tier information
     setCurrentTier({
       tier,
       lineOfProduction,
@@ -86,6 +84,19 @@ const Header = () => {
 
   const handleTierChange = (value: string) => {
     setTier(`TIER ${value}`);
+  };
+
+  const handleBriefingTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    let formattedTime = value;
+    
+    const hours = parseInt(value.slice(0, 2));
+    const minutes = parseInt(value.slice(2, 4));
+    
+    if (hours >= 24) formattedTime = "23" + formattedTime.slice(2);
+    if (minutes >= 60) formattedTime = formattedTime.slice(0, 2) + "59";
+    
+    setBriefingTime(formattedTime);
   };
 
   return (
@@ -153,7 +164,34 @@ const Header = () => {
                 </div>
               )}
             </div>
-            <span className="text-sm opacity-75">BRIEFING TIME: 0830</span>
+            <div className="flex items-center justify-end">
+              <span className="text-sm opacity-75 mr-2">BRIEFING TIME:</span>
+              {isEditingBriefing ? (
+                <Input
+                  type="text"
+                  value={briefingTime}
+                  onChange={handleBriefingTimeChange}
+                  className="h-6 w-16 text-sm text-black p-1"
+                  onBlur={() => setIsEditingBriefing(false)}
+                  onKeyDown={(e) => e.key === "Enter" && setIsEditingBriefing(false)}
+                  placeholder="HHMM"
+                  maxLength={4}
+                  autoFocus
+                />
+              ) : (
+                <div className="flex items-center">
+                  <span className="text-sm">{briefingTime.slice(0, 2)}:{briefingTime.slice(2, 4)}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-1"
+                    onClick={() => setIsEditingBriefing(true)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
