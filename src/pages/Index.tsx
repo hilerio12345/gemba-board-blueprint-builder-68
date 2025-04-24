@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import MetricsTable from "@/components/MetricsTable";
 import ActionItemsLog from "@/components/ActionItemsLog";
@@ -24,7 +23,6 @@ const GembaContent = () => {
   const { currentTier } = useTierConfig();
   
   useEffect(() => {
-    // Generate historical data on first load
     generateHistoricalDataIfNeeded();
   }, []);
 
@@ -34,10 +32,7 @@ const GembaContent = () => {
     return days[day];
   };
 
-  // Function to render multi-board view for higher tiers
   const renderMultiBoardView = () => {
-    // This is a placeholder for the multi-board view implementation
-    // For Tier 2, 3, and 4, we'll show a grid of connected boards
     if (currentTier.tier !== "TIER 1") {
       return (
         <Card className="shadow-md mb-6">
@@ -48,7 +43,6 @@ const GembaContent = () => {
           </CardHeader>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* This would be dynamically populated with connected boards based on tier */}
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h3 className="font-medium">Board #{currentTier.tier === "TIER 2" ? "T1-STD-XXXX" : 
                                            currentTier.tier === "TIER 3" ? "T2-STD-XXXX" : "T3-STD-XXXX"}</h3>
@@ -122,7 +116,6 @@ const GembaContent = () => {
           </div>
         </div>
 
-        {/* Render multi-board view for higher tiers */}
         {renderMultiBoardView()}
 
         <ViewModeContext.Provider value={{ viewMode, setViewMode }}>
