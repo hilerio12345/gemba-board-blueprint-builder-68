@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -135,37 +136,41 @@ const MetricParametersDialog = ({ initialParameters, onParametersUpdate }: Metri
                 </div>
               </div>
 
-              <div className="col-span-2 grid grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
-                <div className="space-y-2">
-                  <Label>Graph View</Label>
-                  <Select
-                    value={parameter.graphView || 'weekly'}
-                    onValueChange={(value) => handleParameterChange(index, 'graphView', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Graph Type</Label>
-                  <Select
-                    value={parameter.graphType || 'line'}
-                    onValueChange={(value) => handleParameterChange(index, 'graphType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="line">Line Graph</SelectItem>
-                      <SelectItem value="bar">Bar Chart</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {/* Fix for the top right corner - Graph settings section */}
+              <div className="bg-gray-50 rounded-lg p-4 mt-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Graph Settings</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Graph View</Label>
+                    <Select
+                      value={parameter.graphView || 'weekly'}
+                      onValueChange={(value) => handleParameterChange(index, 'graphView', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper" sideOffset={5} align="end" alignOffset={0}>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Graph Type</Label>
+                    <Select
+                      value={parameter.graphType || 'line'}
+                      onValueChange={(value) => handleParameterChange(index, 'graphType', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper" sideOffset={5} align="end" alignOffset={0}>
+                        <SelectItem value="line">Line Graph</SelectItem>
+                        <SelectItem value="bar">Bar Chart</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
