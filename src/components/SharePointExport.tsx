@@ -1,12 +1,23 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Copy } from "lucide-react";
+import { Download, Copy, FileExcel } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { getMetricsForDate } from "@/services/metricsService";
+import * as XLSX from 'xlsx';
 
 const SharePointExport = () => {
   const [copied, setCopied] = useState(false);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
 
   const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
@@ -216,27 +227,117 @@ const SharePointExport = () => {
     document.body.removeChild(element);
   };
 
+  const exportToExcel = () => {
+    if (!date?.from || !date?.to) return;
+    
+    const metrics: any[] = [];
+    let currentDate = new Date(date.from);
+    
+    while (currentDate <= date.to) {
+      const dateKey = format(currentDate, 'yyyy-MM-dd');
+      const dayMetrics = getMetricsForDate(dateKey);
+      
+      dayMetrics.forEach(metric => {
+        metrics.push({
+          Date: format(currentDate, 'yyyy-MM-dd'),
+          Category: metric.category,
+          Value: metric.value,
+          Goal: metric.goal,
+          Notes: metric.notes,
+          Status: Object.values(metric.status).join(', '),
+          'Monday Value': metric.dayValues?.monday || metric.availability?.monday || '',
+          'Tuesday Value': metric.dayValues?.tuesday || metric.availability?.tuesday || '',
+          'Wednesday Value': metric.dayValues?.wednesday || metric.availability?.wednesday || '',
+          'Thursday Value': metric.dayValues?.thursday || metric.availability?.thursday || '',
+          'Friday Value': metric.dayValues?.friday || metric.availability?.friday || '',
+        });
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(metrics);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Metrics");
+    
+    XLSX.writeFile(wb, `gemba_metrics_${format(date.from, 'yyyy-MM-dd')}_to_${format(date.to, 'yyyy-MM-dd')}.xlsx`);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
-          Export for SharePoint
+          Export Options
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Export Gemba Board for SharePoint</DialogTitle>
+          <DialogTitle>Export Gemba Board</DialogTitle>
           <DialogDescription>
-            Use this HTML template to embed the Gemba Board in SharePoint
+            Export your Gemba Board data in different formats
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue="html" className="w-full">
+        <Tabs defaultValue="excel" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="excel">Excel Export</TabsTrigger>
             <TabsTrigger value="html">HTML Code</TabsTrigger>
-            <TabsTrigger value="instructions">Instructions</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="excel" className="mt-4">
+            <div className="space-y-4">
+              <div className="grid w-full gap-2">
+                <Label>Select Date Range</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-[300px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <FileExcel className="mr-2 h-4 w-4" />
+                      {date?.from ? (
+                        date.to ? (
+                          <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                          </>
+                        ) : (
+                          format(date.from, "LLL dd, y")
+                        )
+                      ) : (
+                        <span>Pick a date range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={date?.from}
+                      selected={date}
+                      onSelect={setDate}
+                      numberOfMonths={2}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <Button 
+                onClick={exportToExcel}
+                disabled={!date?.from || !date?.to}
+                className="w-full"
+              >
+                <FileExcel className="mr-2 h-4 w-4" />
+                Export to Excel
+              </Button>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="html" className="mt-4">
             <div className="relative">
               <pre className="bg-gray-50 p-4 rounded-md overflow-auto h-96 text-sm">
@@ -256,30 +357,6 @@ const SharePointExport = () => {
                 {copied ? "Copied!" : "Copy to Clipboard"}
               </Button>
               <Button onClick={downloadHTML}>Download HTML</Button>
-            </div>
-          </TabsContent>
-          <TabsContent value="instructions" className="mt-4">
-            <div className="prose prose-sm max-w-none">
-              <h3>How to Embed in SharePoint</h3>
-              <ol className="list-decimal pl-5 space-y-2">
-                <li>Download the HTML file or copy the code</li>
-                <li>In SharePoint, navigate to your site and the page where you want to add the Gemba Board</li>
-                <li>Edit the page</li>
-                <li>Add a "Script Editor" web part</li>
-                <li>Paste the HTML code into the Script Editor</li>
-                <li>Save and publish the page</li>
-              </ol>
-              
-              <h3 className="mt-4">Alternative Method</h3>
-              <ol className="list-decimal pl-5 space-y-2">
-                <li>Save the HTML file to your SharePoint Site Assets library</li>
-                <li>Add a "Page Viewer" web part to your page</li>
-                <li>Set the Link field to the URL of your uploaded HTML file</li>
-                <li>Save and publish the page</li>
-              </ol>
-              
-              <h3 className="mt-4">Notes for Future Tier Integration</h3>
-              <p>The HTML includes commented placeholders where integration points for Tier 2-4 dashboards should be implemented. These are marked with "TIER_INTEGRATION" comments.</p>
             </div>
           </TabsContent>
         </Tabs>
