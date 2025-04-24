@@ -12,30 +12,49 @@ import {
 import SyncSettingsDialog, { SyncSettings } from "./SyncSettingsDialog";
 import SharePointExport from "./SharePointExport";
 import SharePointEmbed from "./SharePointEmbed";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-const ExportOptions = () => {
+interface ExportOptionsProps {
+  currentTier?: string;
+  boardId?: string;
+}
+
+const ExportOptions = ({ currentTier = "TIER 1", boardId = "" }: ExportOptionsProps) => {
   const [syncSettings, setSyncSettings] = useState<SyncSettings>({
     enablePowerBI: false,
     syncToTier2: false,
     syncToTier3: false,
-    syncToTier4: false
+    syncToTier4: false,
+    currentTier,
+    currentBoardId: boardId
   });
   
   const { toast } = useToast();
 
+  // Update settings when tier or board ID changes
+  useEffect(() => {
+    setSyncSettings(prev => ({
+      ...prev,
+      currentTier,
+      currentBoardId: boardId
+    }));
+  }, [currentTier, boardId]);
+
   const exportToHTML = () => {
     // This would contain the SharePoint export logic
-    alert("Exporting to HTML for SharePoint...");
+    alert(`Exporting ${currentTier} board (${boardId}) to HTML for SharePoint...`);
   };
 
   const exportToExcel = () => {
-    alert("Exporting to Excel...");
+    alert(`Exporting ${currentTier} board (${boardId}) to Excel...`);
   };
 
   const shareBoard = () => {
-    alert("Share board link copied to clipboard!");
+    toast({
+      title: "Board link copied",
+      description: `${currentTier} board link (${boardId}) copied to clipboard!`,
+    });
   };
 
   const syncToPowerBI = () => {
@@ -50,7 +69,7 @@ const ExportOptions = () => {
     
     toast({
       title: "Syncing to Power BI",
-      description: `Syncing data to workspace: ${syncSettings.powerBIWorkspace}`,
+      description: `Syncing ${currentTier} data to workspace: ${syncSettings.powerBIWorkspace}`,
     });
     
     // Here would be the actual Power BI sync logic
@@ -75,7 +94,7 @@ const ExportOptions = () => {
     
     toast({
       title: "Syncing to higher tiers",
-      description: `Syncing data to: ${tiersList.join(", ")}`,
+      description: `Syncing ${currentTier} data to: ${tiersList.join(", ")}`,
     });
     
     // Here would be the actual tier sync logic
@@ -111,30 +130,35 @@ const ExportOptions = () => {
       
       <SharePointEmbed />
       
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="border-blue-200">
-            <Share2 className="h-4 w-4 mr-2" />
-            Sync
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel>Sync Options</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={syncToPowerBI}>
-            <BarChart className="h-4 w-4 mr-2" />
-            Sync to Power BI
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={syncToHigherTiers}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Sync to Higher Tiers
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Only show sync options for Tiers 1-3 that can sync up */}
+      {!currentTier.includes("TIER 4") && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="border-blue-200">
+              <Share2 className="h-4 w-4 mr-2" />
+              Sync
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Sync Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={syncToPowerBI}>
+              <BarChart className="h-4 w-4 mr-2" />
+              Sync to Power BI
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={syncToHigherTiers}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Sync to Higher Tiers
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       
       <SyncSettingsDialog 
         initialSettings={syncSettings}
         onSettingsUpdate={handleSyncSettingsUpdate}
+        currentTier={currentTier}
+        currentBoardId={boardId}
       />
       
       <Button variant="ghost" onClick={shareBoard}>

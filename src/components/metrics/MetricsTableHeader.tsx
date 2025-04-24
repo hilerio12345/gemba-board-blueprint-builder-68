@@ -4,9 +4,12 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface MetricsTableHeaderProps {
   viewMode?: 'daily' | 'weekly' | 'monthly';
+  tier?: string;
 }
 
-const MetricsTableHeader = ({ viewMode = 'weekly' }: MetricsTableHeaderProps) => {
+const MetricsTableHeader = ({ viewMode = 'weekly', tier = 'TIER 1' }: MetricsTableHeaderProps) => {
+  const isTierOne = tier === 'TIER 1';
+  
   return (
     <TableHeader>
       <TableRow className="bg-gray-100">
@@ -22,7 +25,15 @@ const MetricsTableHeader = ({ viewMode = 'weekly' }: MetricsTableHeaderProps) =>
           </>
         ) : viewMode === 'daily' ? (
           <TableHead className="text-center border-r">Status</TableHead>
-        ) : null}
+        ) : (
+          // Monthly view
+          <TableHead className="text-center border-r">Monthly Status</TableHead>
+        )}
+        
+        {/* For higher tier boards, show source information */}
+        {!isTierOne && viewMode !== 'monthly' && (
+          <TableHead className="text-center border-r">Source</TableHead>
+        )}
         
         {viewMode !== 'monthly' && <TableHead>Notes</TableHead>}
       </TableRow>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,28 +34,185 @@ export interface SyncSettings {
   tier3BoardId?: string;
   syncToTier4: boolean;
   tier4BoardId?: string;
+  currentTier?: string;
+  currentBoardId?: string;
 }
 
 interface SyncSettingsDialogProps {
   initialSettings: SyncSettings;
   onSettingsUpdate: (settings: SyncSettings) => void;
+  currentTier?: string;
+  currentBoardId?: string;
 }
 
-const SyncSettingsDialog = ({ initialSettings, onSettingsUpdate }: SyncSettingsDialogProps) => {
+const SyncSettingsDialog = ({ 
+  initialSettings, 
+  onSettingsUpdate,
+  currentTier = "TIER 1", 
+  currentBoardId = ""
+}: SyncSettingsDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   
   const form = useForm<SyncSettings>({
-    defaultValues: initialSettings
+    defaultValues: {
+      ...initialSettings,
+      currentTier,
+      currentBoardId
+    }
   });
 
+  // Update form when tier or board ID changes
+  useEffect(() => {
+    form.setValue("currentTier", currentTier);
+    form.setValue("currentBoardId", currentBoardId);
+  }, [currentTier, currentBoardId, form]);
+
   const handleSave = (data: SyncSettings) => {
-    onSettingsUpdate(data);
+    onSettingsUpdate({
+      ...data,
+      currentTier,
+      currentBoardId
+    });
+    
     toast({
       title: "Sync settings updated",
-      description: "Your synchronization settings have been updated successfully",
+      description: `Your ${currentTier} board synchronization settings have been updated successfully`,
     });
+    
     setIsOpen(false);
+  };
+
+  // Function to determine which tier options to show based on current tier
+  const showTierOptions = () => {
+    const tierNumber = parseInt(currentTier.split(" ")[1]);
+    
+    return (
+      <div className="space-y-4">
+        <h3 className="font-medium text-md">Tier Synchronization</h3>
+        
+        {tierNumber === 1 && (
+          <>
+            <FormField
+              control={form.control}
+              name="syncToTier2"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between">
+                  <FormLabel className="text-base">Sync to Tier 2</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {form.watch("syncToTier2") && (
+              <FormField
+                control={form.control}
+                name="tier2BoardId"
+                render={({ field }) => (
+                  <FormItem className="ml-4">
+                    <FormLabel>Tier 2 Board ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="T2-XXXXX" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+          </>
+        )}
+        
+        {tierNumber <= 2 && (
+          <>
+            <FormField
+              control={form.control}
+              name="syncToTier3"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between">
+                  <FormLabel className="text-base">Sync to Tier 3</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {form.watch("syncToTier3") && (
+              <FormField
+                control={form.control}
+                name="tier3BoardId"
+                render={({ field }) => (
+                  <FormItem className="ml-4">
+                    <FormLabel>Tier 3 Board ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="T3-XXXXX" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+          </>
+        )}
+        
+        {tierNumber <= 3 && (
+          <>
+            <FormField
+              control={form.control}
+              name="syncToTier4"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between">
+                  <FormLabel className="text-base">Sync to Tier 4</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {form.watch("syncToTier4") && (
+              <FormField
+                control={form.control}
+                name="tier4BoardId"
+                render={({ field }) => (
+                  <FormItem className="ml-4">
+                    <FormLabel>Tier 4 Board ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="T4-XXXXX" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+          </>
+        )}
+        
+        {/* Show receiving boards section for Tier 2-4 */}
+        {tierNumber > 1 && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-medium text-md mb-2">Receiving Boards</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              This {currentTier} board can receive data from lower tier boards.
+            </p>
+            
+            {/* This would typically be a table or list of connected boards */}
+            <div className="bg-gray-50 p-3 rounded-md border text-sm">
+              <p className="text-gray-500">Board ID: {currentBoardId}</p>
+              <p className="text-gray-500">Connected boards: None</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -68,9 +225,9 @@ const SyncSettingsDialog = ({ initialSettings, onSettingsUpdate }: SyncSettingsD
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Synchronization Settings</DialogTitle>
+          <DialogTitle>{currentTier} Synchronization Settings</DialogTitle>
           <DialogDescription>
-            Configure how this Gemba Board syncs with Power BI and higher-tier boards.
+            Configure how this {currentTier} Gemba Board syncs with Power BI and other tier boards.
           </DialogDescription>
         </DialogHeader>
         
@@ -131,102 +288,8 @@ const SyncSettingsDialog = ({ initialSettings, onSettingsUpdate }: SyncSettingsD
               )}
             </div>
             
-            <div className="space-y-4">
-              <h3 className="font-medium text-md">Tier Synchronization</h3>
-              
-              <FormField
-                control={form.control}
-                name="syncToTier2"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between">
-                    <FormLabel className="text-base">Sync to Tier 2</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              {form.watch("syncToTier2") && (
-                <FormField
-                  control={form.control}
-                  name="tier2BoardId"
-                  render={({ field }) => (
-                    <FormItem className="ml-4">
-                      <FormLabel>Tier 2 Board ID</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )}
-              
-              <FormField
-                control={form.control}
-                name="syncToTier3"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between">
-                    <FormLabel className="text-base">Sync to Tier 3</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              {form.watch("syncToTier3") && (
-                <FormField
-                  control={form.control}
-                  name="tier3BoardId"
-                  render={({ field }) => (
-                    <FormItem className="ml-4">
-                      <FormLabel>Tier 3 Board ID</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )}
-              
-              <FormField
-                control={form.control}
-                name="syncToTier4"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between">
-                    <FormLabel className="text-base">Sync to Tier 4</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              {form.watch("syncToTier4") && (
-                <FormField
-                  control={form.control}
-                  name="tier4BoardId"
-                  render={({ field }) => (
-                    <FormItem className="ml-4">
-                      <FormLabel>Tier 4 Board ID</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
+            {/* Show tier options based on current tier */}
+            {showTierOptions()}
             
             <DialogFooter>
               <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>

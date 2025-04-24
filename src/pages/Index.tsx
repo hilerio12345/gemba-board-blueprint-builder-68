@@ -13,10 +13,27 @@ import { CalendarDays, Calendar } from "lucide-react";
 const GembaContent = () => {
   const { currentDate, setCurrentDate, formattedDate } = useDateContext();
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [currentTier, setCurrentTier] = useState("TIER 1");
+  const [boardId, setBoardId] = useState("T1-" + Math.random().toString(36).substring(2, 8));
   
   useEffect(() => {
     // Generate historical data on first load
     generateHistoricalDataIfNeeded();
+    
+    // Listen for tier changes from Header component
+    const handleTierChange = (event: CustomEvent) => {
+      if (event.detail) {
+        setCurrentTier(event.detail.tier);
+        setBoardId(event.detail.boardId);
+      }
+    };
+    
+    // Add event listener for tier changes
+    window.addEventListener('tierChange' as any, handleTierChange);
+    
+    return () => {
+      window.removeEventListener('tierChange' as any, handleTierChange);
+    };
   }, []);
 
   const getDayOfWeekText = () => {
@@ -33,7 +50,7 @@ const GembaContent = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              Tier 1 Gemba Board
+              {currentTier} Gemba Board
               <span className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
                 {viewMode === 'daily' ? (
                   <span className="flex items-center gap-1">
@@ -61,7 +78,7 @@ const GembaContent = () => {
               viewMode={viewMode}
             />
             <div className="flex gap-2 flex-wrap">
-              <ExportOptions />
+              <ExportOptions currentTier={currentTier} boardId={boardId} />
             </div>
           </div>
         </div>
@@ -101,9 +118,9 @@ const GembaContent = () => {
           <p className="mt-1">
             Electronic Gemba Board for multi-tiered Lean Management System | SharePoint-compatible
           </p>
-          {/* Hidden placeholders for future tier integration */}
-          {/* <!-- TIER_INTEGRATION: This is where data will be sent to Tier 2 dashboards --> */}
-          {/* <!-- TIER_INTEGRATION: This is where aggregated metrics will be compiled --> */}
+          <p className="mt-1">
+            Current Board: {currentTier} | ID: {boardId}
+          </p>
         </div>
       </main>
     </div>
