@@ -1,4 +1,3 @@
-
 import React, { useContext, useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -7,7 +6,7 @@ import MetricsTableHeader from "./metrics/MetricsTableHeader";
 import MetricRow from "./metrics/MetricRow";
 import { useMetricsData } from "./metrics/useMetricsData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Calendar, FileChart } from "lucide-react";
+import { CalendarDays, Calendar, FileChartLine } from "lucide-react";
 import MonthlyView from "./metrics/MonthlyView";
 import { ViewModeContext } from "../pages/Index";
 import { useTierConfig } from "./Header";
@@ -284,7 +283,7 @@ const MetricsTable = () => {
               onClick={() => setShowDeptMetrics(!showDeptMetrics)}
               className="flex items-center gap-1"
             >
-              <FileChart className="h-4 w-4" />
+              <FileChartLine className="h-4 w-4" />
               {showDeptMetrics ? "Hide Dept. Metrics" : "Show Dept. Metrics"}
             </Button>
           )}
