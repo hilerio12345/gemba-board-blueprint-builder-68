@@ -29,4 +29,11 @@ export interface Metric {
     thursday: number;
     friday: number;
   };
+  department?: string; // Added department field
+  fillRate?: number;   // Added fill rate field for staffing metrics
+  totalAssigned?: number; // Total assigned positions
+  filledPositions?: number; // Filled positions count
+  effectiveFillRate?: number; // Effective fill rate percentage
+  rpaAssigned?: number; // RPA/Interns assigned count
+  augmentedFillRate?: number; // Augmented fill rate
 }

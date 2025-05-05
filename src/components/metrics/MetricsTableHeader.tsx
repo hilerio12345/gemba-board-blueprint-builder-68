@@ -9,6 +9,7 @@ interface MetricsTableHeaderProps {
 
 const MetricsTableHeader = ({ viewMode = 'weekly', tier = 'TIER 1' }: MetricsTableHeaderProps) => {
   const isTierOne = tier === 'TIER 1';
+  const isTierFour = tier === 'TIER 4';
   
   return (
     <TableHeader>
@@ -35,7 +36,9 @@ const MetricsTableHeader = ({ viewMode = 'weekly', tier = 'TIER 1' }: MetricsTab
           <TableHead className="text-center border-r">Source</TableHead>
         )}
         
-        {viewMode !== 'monthly' && <TableHead>Notes</TableHead>}
+        {viewMode !== 'monthly' && (
+          <TableHead className={isTierFour ? "min-w-[250px]" : ""}>Notes</TableHead>
+        )}
       </TableRow>
     </TableHeader>
   );
