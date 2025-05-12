@@ -36,4 +36,6 @@ export interface Metric {
   effectiveFillRate?: number; // Effective fill rate percentage
   rpaAssigned?: number; // RPA/Interns assigned count
   augmentedFillRate?: number; // Augmented fill rate
+  directorate?: string; // Added directorate field
+  officeCode?: string; // Added office specialty code field
 }
