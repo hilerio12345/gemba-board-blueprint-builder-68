@@ -6,6 +6,7 @@ import { Metric } from "@/types/metrics";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Activity, Truck, CheckCircle2, DollarSign, Users } from "lucide-react";
+import { useMetricsData } from "./useMetricsData";
 
 interface MonthlyViewProps {
   metrics: Metric[];
@@ -28,7 +29,18 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     return acc;
   }, {} as Record<string, Metric[]>);
 
-  // Helper function to get aggregated status for a day for a specific category
+  // Map day of week to our status keys
+  const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
+    0: null, // Sunday (weekend)
+    1: "monday",
+    2: "tuesday",
+    3: "wednesday",
+    4: "thursday",
+    5: "friday",
+    6: null, // Saturday (weekend)
+  };
+
+  // Helper function to get status for a specific day and category directly from the metrics data
   const getDayStatusForCategory = (day: Date, category: string) => {
     // First check if it's a weekend - these should always be gray
     if (isWeekend(day)) return "gray";
@@ -36,23 +48,10 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     // Then check if it's in the current month
     if (!isSameMonth(day, currentDate)) return "gray";
 
-    // Map day of week to our status keys
-    // JavaScript getDay(): 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    // We need: monday, tuesday, wednesday, thursday, friday
-    const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
-      0: null, // Sunday (weekend)
-      1: "monday",
-      2: "tuesday",
-      3: "wednesday",
-      4: "thursday",
-      5: "friday",
-      6: null, // Saturday (weekend)
-    };
-    
     const dayOfWeek = getDay(day);
     const statusKey = dayOfWeekMapping[dayOfWeek];
     
-    // Return gray for weekends (already handled above but keeping for clarity)
+    // Return gray for weekends
     if (!statusKey) return "gray";
     
     // If we're looking at all categories or a specific one
@@ -62,16 +61,23 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     
     if (relevantMetrics.length === 0) return "gray";
     
-    // Count statuses for the day
-    const statuses = relevantMetrics.map(metric => metric.status[statusKey]);
-    const redCount = statuses.filter(s => s === "red").length;
-    const yellowCount = statuses.filter(s => s === "yellow").length;
-    const greenCount = statuses.filter(s => s === "green").length;
-    
-    if (redCount > 0) return "red";
-    if (yellowCount > 0) return "yellow";
-    if (greenCount > 0) return "green";
-    return "gray"; // Default if no statuses found
+    // For ALL category view, prioritize red > yellow > green
+    if (category === "ALL") {
+      const hasRed = relevantMetrics.some(metric => metric.status[statusKey] === "red");
+      if (hasRed) return "red";
+      
+      const hasYellow = relevantMetrics.some(metric => metric.status[statusKey] === "yellow");
+      if (hasYellow) return "yellow";
+      
+      const hasGreen = relevantMetrics.some(metric => metric.status[statusKey] === "green");
+      if (hasGreen) return "green";
+      
+      return "gray";
+    } else {
+      // For specific category, just use the first metric's status
+      const metric = relevantMetrics[0];
+      return metric ? metric.status[statusKey] : "gray";
+    }
   };
 
   // Helper function to get status for each category on a specific day
@@ -85,10 +91,6 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
         PEOPLE: "gray"
       };
     }
-    
-    const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
-      0: null, 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: null
-    };
     
     const dayOfWeek = getDay(day);
     const statusKey = dayOfWeekMapping[dayOfWeek];
