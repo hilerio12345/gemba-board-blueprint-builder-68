@@ -1,6 +1,5 @@
-
 import React from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isWeekend } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isWeekend, getDay } from "date-fns";
 import { useDateContext } from "@/contexts/DateContext";
 import { Metric } from "@/types/metrics";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +23,24 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     // Then check if it's in the current month
     if (!isSameMonth(day, currentDate)) return "gray";
 
-    // Convert day name to status key
-    const dayName = format(day, "EEEE").toLowerCase();
-    const statusKey = dayName.slice(0, 3) + "day" as keyof Metric["status"];
+    // Map day of week to our status keys
+    // JavaScript getDay(): 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // We need: monday, tuesday, wednesday, thursday, friday
+    const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
+      0: null, // Sunday (weekend)
+      1: "monday",
+      2: "tuesday",
+      3: "wednesday",
+      4: "thursday",
+      5: "friday",
+      6: null, // Saturday (weekend)
+    };
+    
+    const dayOfWeek = getDay(day);
+    const statusKey = dayOfWeekMapping[dayOfWeek];
+    
+    // Return gray for weekends (already handled above but keeping for clarity)
+    if (!statusKey) return "gray";
     
     // Count statuses for the day
     const statuses = metrics.map(metric => metric.status[statusKey]);
@@ -76,7 +90,7 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <div className="grid grid-cols-7 gap-1">
-        {/* Calendar header */}
+        {/* Calendar header - starting with Monday */}
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
           <div
             key={day}
@@ -84,6 +98,11 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
           >
             {day}
           </div>
+        ))}
+        
+        {/* Calculate offset for first day to align with Monday-start */}
+        {Array.from({ length: (getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1) }).map((_, i) => (
+          <div key={`empty-${i}`} className="aspect-square bg-white"></div>
         ))}
         
         {/* Calendar days */}
