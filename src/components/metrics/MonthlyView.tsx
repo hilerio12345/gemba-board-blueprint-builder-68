@@ -1,8 +1,11 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isWeekend, getDay } from "date-fns";
 import { useDateContext } from "@/contexts/DateContext";
 import { Metric } from "@/types/metrics";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Activity, Truck, CheckCircle2, DollarSign, Users } from "lucide-react";
 
 interface MonthlyViewProps {
   metrics: Metric[];
@@ -10,13 +13,23 @@ interface MonthlyViewProps {
 
 const MonthlyView = ({ metrics }: MonthlyViewProps) => {
   const { currentDate } = useDateContext();
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Helper function to get aggregated status for a day
-  const getDayStatus = (day: Date) => {
+  // Get metrics grouped by category
+  const metricsByCategory = metrics.reduce((acc, metric) => {
+    if (!acc[metric.category]) {
+      acc[metric.category] = [];
+    }
+    acc[metric.category].push(metric);
+    return acc;
+  }, {} as Record<string, Metric[]>);
+
+  // Helper function to get aggregated status for a day for a specific category
+  const getDayStatusForCategory = (day: Date, category: string) => {
     // First check if it's a weekend - these should always be gray
     if (isWeekend(day)) return "gray";
     
@@ -42,8 +55,15 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     // Return gray for weekends (already handled above but keeping for clarity)
     if (!statusKey) return "gray";
     
+    // If we're looking at all categories or a specific one
+    const relevantMetrics = category === "ALL" 
+      ? metrics 
+      : metricsByCategory[category] || [];
+    
+    if (relevantMetrics.length === 0) return "gray";
+    
     // Count statuses for the day
-    const statuses = metrics.map(metric => metric.status[statusKey]);
+    const statuses = relevantMetrics.map(metric => metric.status[statusKey]);
     const redCount = statuses.filter(s => s === "red").length;
     const yellowCount = statuses.filter(s => s === "yellow").length;
     const greenCount = statuses.filter(s => s === "green").length;
@@ -52,6 +72,42 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     if (yellowCount > 0) return "yellow";
     if (greenCount > 0) return "green";
     return "gray"; // Default if no statuses found
+  };
+
+  // Helper function to get status for each category on a specific day
+  const getDayDetailedStatus = (day: Date) => {
+    if (isWeekend(day) || !isSameMonth(day, currentDate)) {
+      return {
+        AVAILABILITY: "gray",
+        DELIVERY: "gray",
+        QUALITY: "gray",
+        COST: "gray",
+        PEOPLE: "gray"
+      };
+    }
+    
+    const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
+      0: null, 1: "monday", 2: "tuesday", 3: "wednesday", 4: "thursday", 5: "friday", 6: null
+    };
+    
+    const dayOfWeek = getDay(day);
+    const statusKey = dayOfWeekMapping[dayOfWeek];
+    
+    if (!statusKey) return {
+      AVAILABILITY: "gray",
+      DELIVERY: "gray",
+      QUALITY: "gray",
+      COST: "gray",
+      PEOPLE: "gray"
+    };
+    
+    return {
+      AVAILABILITY: getDayStatusForCategory(day, "AVAILABILITY"),
+      DELIVERY: getDayStatusForCategory(day, "DELIVERY"),
+      QUALITY: getDayStatusForCategory(day, "QUALITY"),
+      COST: getDayStatusForCategory(day, "COST"),
+      PEOPLE: getDayStatusForCategory(day, "PEOPLE")
+    };
   };
 
   const getStatusColor = (status: string) => {
@@ -64,7 +120,7 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
   };
 
   // Calculate totals for summary
-  const calculateTotals = () => {
+  const calculateTotals = (category?: string) => {
     // Only consider weekdays in the current month
     const workdays = days.filter(day => 
       isSameMonth(day, currentDate) && !isWeekend(day)
@@ -78,73 +134,146 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     };
     
     workdays.forEach(day => {
-      const status = getDayStatus(day);
+      const status = category 
+        ? getDayStatusForCategory(day, category)
+        : getDayStatusForCategory(day, "ALL");
       totals[status as keyof typeof totals]++;
     });
     
     return totals;
   };
 
-  const totals = calculateTotals();
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "AVAILABILITY": return <Activity className="h-4 w-4" />;
+      case "DELIVERY": return <Truck className="h-4 w-4" />;
+      case "QUALITY": return <CheckCircle2 className="h-4 w-4" />;
+      case "COST": return <DollarSign className="h-4 w-4" />;
+      case "PEOPLE": return <Users className="h-4 w-4" />;
+      default: return null;
+    }
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <div className="grid grid-cols-7 gap-1">
-        {/* Calendar header - starting with Monday */}
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <div
-            key={day}
-            className="h-8 flex items-center justify-center font-semibold text-gray-600"
-          >
-            {day}
-          </div>
-        ))}
-        
-        {/* Calculate offset for first day to align with Monday-start */}
-        {Array.from({ length: (getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1) }).map((_, i) => (
-          <div key={`empty-${i}`} className="aspect-square bg-white"></div>
-        ))}
-        
-        {/* Calendar days */}
-        {days.map((day, index) => {
-          const status = getDayStatus(day);
-          return (
-            <div
-              key={index}
-              className={`
-                aspect-square p-2 flex flex-col
-                ${getStatusColor(status)}
-                ${!isSameMonth(day, currentDate) ? "opacity-50" : ""}
-                rounded-lg
-              `}
-            >
-              <span className={`text-sm font-medium ${status === 'gray' ? 'text-gray-600' : 'text-white'}`}>
-                {format(day, "d")}
-              </span>
+    <div className="bg-white rounded-lg shadow">
+      <div className="p-4 border-b">
+        <Tabs 
+          value={selectedCategory} 
+          onValueChange={setSelectedCategory}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-6 w-full">
+            <TabsTrigger value="ALL">All</TabsTrigger>
+            <TabsTrigger value="AVAILABILITY" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              <span>Availability</span>
+            </TabsTrigger>
+            <TabsTrigger value="DELIVERY" className="flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              <span>Delivery</span>
+            </TabsTrigger>
+            <TabsTrigger value="QUALITY" className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Quality</span>
+            </TabsTrigger>
+            <TabsTrigger value="COST" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              <span>Cost</span>
+            </TabsTrigger>
+            <TabsTrigger value="PEOPLE" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>People</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={selectedCategory} className="mt-4">
+            <div className="grid grid-cols-7 gap-1">
+              {/* Calendar header - starting with Monday */}
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                <div
+                  key={day}
+                  className="h-8 flex items-center justify-center font-semibold text-gray-600"
+                >
+                  {day}
+                </div>
+              ))}
+              
+              {/* Calculate offset for first day to align with Monday-start */}
+              {Array.from({ length: (getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1) }).map((_, i) => (
+                <div key={`empty-${i}`} className="aspect-square bg-white"></div>
+              ))}
+              
+              {/* Calendar days */}
+              {days.map((day, index) => {
+                const status = selectedCategory === "ALL" ? 
+                  getDayStatusForCategory(day, "ALL") : 
+                  getDayStatusForCategory(day, selectedCategory);
+                
+                const dayStatuses = getDayDetailedStatus(day);
+                
+                return (
+                  <div
+                    key={index}
+                    className={`
+                      aspect-square p-1 flex flex-col
+                      ${!isSameMonth(day, currentDate) ? "opacity-50 bg-gray-100" : "bg-white"}
+                      rounded-lg border
+                    `}
+                  >
+                    <span className="text-xs font-medium text-gray-600 mb-1">
+                      {format(day, "d")}
+                    </span>
+                    
+                    {selectedCategory === "ALL" ? (
+                      <div className="grid grid-cols-2 gap-1 flex-1">
+                        <div className={`${getStatusColor(dayStatuses.AVAILABILITY)} rounded-sm flex items-center justify-center`}>
+                          <Activity className="h-3 w-3 text-white" />
+                        </div>
+                        <div className={`${getStatusColor(dayStatuses.DELIVERY)} rounded-sm flex items-center justify-center`}>
+                          <Truck className="h-3 w-3 text-white" />
+                        </div>
+                        <div className={`${getStatusColor(dayStatuses.QUALITY)} rounded-sm flex items-center justify-center`}>
+                          <CheckCircle2 className="h-3 w-3 text-white" />
+                        </div>
+                        <div className={`${getStatusColor(dayStatuses.COST)} rounded-sm flex items-center justify-center`}>
+                          <DollarSign className="h-3 w-3 text-white" />
+                        </div>
+                        <div className={`${getStatusColor(dayStatuses.PEOPLE)} rounded-sm col-span-2 flex items-center justify-center`}>
+                          <Users className="h-3 w-3 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`flex-1 ${getStatusColor(status)} rounded-sm flex items-center justify-center`}>
+                        {getCategoryIcon(selectedCategory)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Summary section */}
-      <div className="mt-6 border-t pt-4">
-        <h3 className="text-sm font-medium mb-2">Monthly Summary</h3>
-        <div className="flex gap-3">
+      <div className="p-4 border-t">
+        <h3 className="text-sm font-medium mb-2">Monthly Summary: {selectedCategory === "ALL" ? "All Categories" : selectedCategory}</h3>
+        <div className="flex gap-3 flex-wrap">
           <Badge variant="outline" className="flex items-center gap-1">
             <span className="h-3 w-3 rounded-full bg-green-500"></span>
-            <span>Green: {totals.green}</span>
+            <span>Green: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).green}</span>
           </Badge>
           <Badge variant="outline" className="flex items-center gap-1">
             <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
-            <span>Yellow: {totals.yellow}</span>
+            <span>Yellow: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).yellow}</span>
           </Badge>
           <Badge variant="outline" className="flex items-center gap-1">
             <span className="h-3 w-3 rounded-full bg-red-500"></span>
-            <span>Red: {totals.red}</span>
+            <span>Red: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).red}</span>
           </Badge>
           <Badge variant="outline" className="flex items-center gap-1">
             <span className="h-3 w-3 rounded-full bg-gray-200"></span>
-            <span>N/A: {totals.gray}</span>
+            <span>N/A: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).gray}</span>
           </Badge>
         </div>
       </div>
