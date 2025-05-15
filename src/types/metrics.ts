@@ -29,13 +29,15 @@ export interface Metric {
     thursday: number;
     friday: number;
   };
-  department?: string; // Added department field
-  fillRate?: number;   // Added fill rate field for staffing metrics
-  totalAssigned?: number; // Total assigned positions
+  department?: string;      // Added department field
+  fillRate?: number;        // Added fill rate field for staffing metrics
+  totalAssigned?: number;   // Total assigned positions
   filledPositions?: number; // Filled positions count
   effectiveFillRate?: number; // Effective fill rate percentage
-  rpaAssigned?: number; // RPA/Interns assigned count
+  rpaAssigned?: number;     // RPA/Interns assigned count
   augmentedFillRate?: number; // Augmented fill rate
-  directorate?: string; // Added directorate field
-  officeCode?: string; // Added office specialty code field
+  directorate?: string;     // Added directorate field
+  officeCode?: string;      // Added office specialty code field
+  boardId?: string;         // Board ID this metric belongs to
+  lineOfProduction?: string; // Line of production for this metric
 }

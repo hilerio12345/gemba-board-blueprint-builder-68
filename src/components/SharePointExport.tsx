@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Copy, FileSpreadsheet } from "lucide-react";
+import { Download, Copy, FileSpreadsheet, FileExcel } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -14,6 +13,7 @@ import { getMetricsForDate } from "@/services/metricsService";
 import * as XLSX from 'xlsx';
 import { useTierConfig } from "./Header";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const SharePointExport = () => {
   const [copied, setCopied] = useState(false);
@@ -23,6 +23,7 @@ const SharePointExport = () => {
     to: new Date(),
   });
   const { toast } = useToast();
+  const [includeConnectedBoards, setIncludeConnectedBoards] = useState(false);
 
   // Use the embedded template instead of trying to load it from file system
   const getHtmlTemplate = () => {
@@ -391,20 +392,75 @@ const SharePointExport = () => {
     }
   };
 
+  const getConnectedBoards = (tierNumber: number): string[] => {
+    // This simulates getting connected board IDs based on tier level
+    const connectedBoardIds: string[] = [];
+    
+    if (tierNumber === 4) {
+      // Tier 4 has access to all boards
+      connectedBoardIds.push(
+        "T3-STD-1234", "T3-EXP-2345", "T3-URG-3456",
+        "T2-STD-4567", "T2-EXP-5678", "T2-URG-6789",
+        "T1-STD-7890", "T1-EXP-8901", "T1-URG-9012"
+      );
+    } else if (tierNumber === 3) {
+      // Tier 3 has access to tier 2 and tier 1 boards
+      connectedBoardIds.push(
+        "T2-STD-4567", "T2-EXP-5678", "T2-URG-6789",
+        "T1-STD-7890", "T1-EXP-8901", "T1-URG-9012"
+      );
+    } else if (tierNumber === 2) {
+      // Tier 2 has access to tier 1 boards
+      connectedBoardIds.push(
+        "T1-STD-7890", "T1-EXP-8901", "T1-URG-9012"
+      );
+    }
+    
+    return connectedBoardIds;
+  };
+
+  const getMetricsForBoard = (boardId: string, dateKey: string): any[] => {
+    // Simulate getting metrics for a specific board
+    // In a real implementation, this would pull data from a database
+    const metrics = getMetricsForDate(dateKey);
+    
+    // Add board ID and directorate/office info to metrics
+    return metrics.map(metric => ({
+      ...metric,
+      boardId,
+      directorate: boardId.includes("DPA") ? "DPA" : 
+                   boardId.includes("DPT") ? "DPT" : 
+                   boardId.includes("DPX") ? "DPX" : 
+                   boardId.includes("PB") ? "PB" : 
+                   boardId.includes("DPH") ? "DPH" : "Other",
+      officeCode: boardId.split("-")[1] || "N/A",
+      lineOfProduction: boardId.includes("STD") ? "Standard DD214s" : 
+                        boardId.includes("EXP") ? "Express DD214s" : 
+                        boardId.includes("URG") ? "Urgent DD214s" : "Other"
+    }));
+  };
+
   const exportToExcel = () => {
     if (!date?.from || !date?.to) return;
     
     try {
-      const metrics: any[] = [];
+      const allMetrics: any[] = [];
       let currentDate = new Date(date.from);
+      const tierNumber = parseInt(currentTier.tier.replace("TIER ", "")) || 1;
       
+      // Get current board metrics
       while (currentDate <= date.to) {
         const dateKey = format(currentDate, 'yyyy-MM-dd');
         const dayMetrics = getMetricsForDate(dateKey);
         
         dayMetrics.forEach(metric => {
-          metrics.push({
+          allMetrics.push({
             Date: format(currentDate, 'yyyy-MM-dd'),
+            BoardID: currentTier.boardId,
+            Tier: currentTier.tier,
+            Directorate: metric.directorate || "N/A",
+            OfficeCode: metric.officeCode || "N/A",
+            LineOfProduction: currentTier.lineOfProduction,
             Category: metric.category,
             Value: metric.value,
             Goal: metric.goal,
@@ -415,21 +471,104 @@ const SharePointExport = () => {
             'Wednesday Value': metric.dayValues?.wednesday || metric.availability?.wednesday || '',
             'Thursday Value': metric.dayValues?.thursday || metric.availability?.thursday || '',
             'Friday Value': metric.dayValues?.friday || metric.availability?.friday || '',
+            Department: metric.department || "N/A",
+            FillRate: metric.fillRate || "N/A",
+            TotalAssigned: metric.totalAssigned || "N/A",
+            FilledPositions: metric.filledPositions || "N/A",
+            EffectiveFillRate: metric.effectiveFillRate || "N/A"
           });
         });
         
         currentDate.setDate(currentDate.getDate() + 1);
       }
       
-      const ws = XLSX.utils.json_to_sheet(metrics);
+      // If including connected boards, add their metrics too
+      if (includeConnectedBoards) {
+        const connectedBoards = getConnectedBoards(tierNumber);
+        
+        for (const boardId of connectedBoards) {
+          currentDate = new Date(date.from);
+          while (currentDate <= date.to) {
+            const dateKey = format(currentDate, 'yyyy-MM-dd');
+            const boardMetrics = getMetricsForBoard(boardId, dateKey);
+            
+            // Create a board tier label (T1 → TIER 1, etc)
+            const boardTier = `TIER ${boardId.charAt(1)}`;
+            
+            boardMetrics.forEach(metric => {
+              allMetrics.push({
+                Date: format(currentDate, 'yyyy-MM-dd'),
+                BoardID: boardId,
+                Tier: boardTier,
+                Directorate: metric.directorate || "N/A",
+                OfficeCode: metric.officeCode || "N/A",
+                LineOfProduction: metric.lineOfProduction || "N/A",
+                Category: metric.category,
+                Value: metric.value,
+                Goal: metric.goal,
+                Notes: metric.notes,
+                Status: Object.values(metric.status).join(', '),
+                'Monday Value': metric.dayValues?.monday || metric.availability?.monday || '',
+                'Tuesday Value': metric.dayValues?.tuesday || metric.availability?.tuesday || '',
+                'Wednesday Value': metric.dayValues?.wednesday || metric.availability?.wednesday || '',
+                'Thursday Value': metric.dayValues?.thursday || metric.availability?.thursday || '',
+                'Friday Value': metric.dayValues?.friday || metric.availability?.friday || '',
+                Department: metric.department || "N/A",
+                FillRate: metric.fillRate || "N/A",
+                TotalAssigned: metric.totalAssigned || "N/A",
+                FilledPositions: metric.filledPositions || "N/A",
+                EffectiveFillRate: metric.effectiveFillRate || "N/A"
+              });
+            });
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        }
+      }
+      
+      // Create workbook
+      const ws = XLSX.utils.json_to_sheet(allMetrics);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Metrics");
       
-      XLSX.writeFile(wb, `gemba_metrics_${format(date.from, 'yyyy-MM-dd')}_to_${format(date.to, 'yyyy-MM-dd')}.xlsx`);
+      // Add column widths for better readability
+      const colWidths = [
+        { wch: 10 }, // Date
+        { wch: 15 }, // BoardID
+        { wch: 10 }, // Tier
+        { wch: 10 }, // Directorate
+        { wch: 12 }, // OfficeCode
+        { wch: 20 }, // LineOfProduction
+        { wch: 15 }, // Category
+        { wch: 8 },  // Value
+        { wch: 12 }, // Goal
+        { wch: 30 }, // Notes
+        { wch: 20 }, // Status
+        { wch: 12 }, // Monday Value
+        { wch: 12 }, // Tuesday Value
+        { wch: 12 }, // Wednesday Value
+        { wch: 12 }, // Thursday Value
+        { wch: 12 }, // Friday Value
+        { wch: 12 }, // Department
+        { wch: 10 }, // FillRate
+        { wch: 12 }, // TotalAssigned
+        { wch: 14 }, // FilledPositions
+        { wch: 16 }, // EffectiveFillRate
+      ];
+      
+      ws['!cols'] = colWidths;
+      
+      const fileName = includeConnectedBoards 
+        ? `all_boards_metrics_${format(date.from, 'yyyy-MM-dd')}_to_${format(date.to, 'yyyy-MM-dd')}.xlsx`
+        : `gemba_metrics_${format(date.from, 'yyyy-MM-dd')}_to_${format(date.to, 'yyyy-MM-dd')}.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
       
       toast({
         title: "Excel file downloaded",
-        description: "Metrics data has been exported to Excel"
+        description: includeConnectedBoards 
+          ? "Metrics data from all connected boards has been exported to Excel"
+          : "Metrics data has been exported to Excel"
       });
     } catch (err) {
       console.error("Failed to export Excel:", err);
@@ -525,13 +664,27 @@ const SharePointExport = () => {
                 </Popover>
               </div>
               
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="includeConnectedBoards" 
+                  checked={includeConnectedBoards}
+                  onCheckedChange={(checked) => setIncludeConnectedBoards(checked === true)}
+                />
+                <label
+                  htmlFor="includeConnectedBoards"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Include data from all connected boards
+                </label>
+              </div>
+              
               <Button 
                 onClick={exportToExcel}
                 disabled={!date?.from || !date?.to}
                 className="w-full"
               >
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Export to Excel
+                <FileExcel className="mr-2 h-4 w-4" />
+                {includeConnectedBoards ? "Export All Boards to Excel" : "Export to Excel"}
               </Button>
             </div>
           </TabsContent>
