@@ -17,11 +17,12 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
 
   // Helper function to get aggregated status for a day
   const getDayStatus = (date: Date) => {
+    // First check if it's a weekend - these should always be gray
     const dayOfWeek = format(date, "EEEE").toLowerCase();
-    if (!isSameMonth(date, currentDate)) return "gray";
-
-    // Only consider weekdays (Monday-Friday)
     if (dayOfWeek === "saturday" || dayOfWeek === "sunday") return "gray";
+    
+    // Then check if it's in the current month
+    if (!isSameMonth(date, currentDate)) return "gray";
 
     // Convert day name to status key
     const statusKey = dayOfWeek.slice(0, 3) + "day" as keyof Metric["status"];
@@ -67,7 +68,7 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
               className={`
                 aspect-square p-2 flex flex-col
                 ${getStatusColor(status)}
-                ${!isSameMonth(day, currentDate) ? "opacity-50" : ""}
+                ${!isSameMonth(date, currentDate) ? "opacity-50" : ""}
                 rounded-lg
               `}
             >
