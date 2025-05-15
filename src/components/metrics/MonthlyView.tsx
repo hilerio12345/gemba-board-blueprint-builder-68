@@ -68,7 +68,7 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
               className={`
                 aspect-square p-2 flex flex-col
                 ${getStatusColor(status)}
-                ${!isSameMonth(date, currentDate) ? "opacity-50" : ""}
+                ${!isSameMonth(day, currentDate) ? "opacity-50" : ""}
                 rounded-lg
               `}
             >
