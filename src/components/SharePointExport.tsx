@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Copy, FileSpreadsheet, FileExcel } from "lucide-react";
+import { Download, Copy, FileSpreadsheet, FileText } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -683,7 +683,7 @@ const SharePointExport = () => {
                 disabled={!date?.from || !date?.to}
                 className="w-full"
               >
-                <FileExcel className="mr-2 h-4 w-4" />
+                <FileText className="mr-2 h-4 w-4" />
                 {includeConnectedBoards ? "Export All Boards to Excel" : "Export to Excel"}
               </Button>
             </div>
