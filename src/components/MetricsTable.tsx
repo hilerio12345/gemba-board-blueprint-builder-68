@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
 import { useDateContext } from "../contexts/DateContext";
@@ -8,16 +8,15 @@ import { useMetricsData } from "./metrics/useMetricsData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Calendar, FileChartLine } from "lucide-react";
 import MonthlyView from "./metrics/MonthlyView";
-import { ViewModeContext } from "../pages/Index";
 import { useTierConfig } from "./Header";
 import { Button } from "@/components/ui/button";
 
 const MetricsTable = () => {
   const { dateKey } = useDateContext();
-  const { viewMode, setViewMode } = useContext(ViewModeContext);
   const { currentTier } = useTierConfig();
   const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
   const [showDeptMetrics, setShowDeptMetrics] = useState(false);
+  const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   
   const {
     metrics,

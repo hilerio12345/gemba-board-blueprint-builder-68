@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { DateProvider } from "../contexts/DateContext";
+import { TierProvider } from "../components/Header";
 import Header from "../components/Header";
 import MetricsTable from "../components/MetricsTable";
 import ActionItemsLog from "../components/ActionItemsLog";
@@ -16,19 +17,34 @@ const Index = () => {
     generateHistoricalDataIfNeeded();
   });
 
+  // Sample data for MetricsLineGraph
+  const sampleGraphData = [
+    { day: "Mon", value: 85 },
+    { day: "Tue", value: 92 },
+    { day: "Wed", value: 78 },
+    { day: "Thu", value: 95 },
+    { day: "Fri", value: 88 },
+  ];
+
   return (
-    <DateProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Header viewMode={viewMode} setViewMode={setViewMode} />
-        
-        <main className="container mx-auto px-4 py-6 space-y-6">
-          <MetricsTable viewMode={viewMode} />
-          <MetricsLineGraph />
-          <ActionItemsLog />
-          <ExportOptions />
-        </main>
-      </div>
-    </DateProvider>
+    <TierProvider>
+      <DateProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          
+          <main className="container mx-auto px-4 py-6 space-y-6">
+            <MetricsTable />
+            <MetricsLineGraph 
+              category="Sample Metric"
+              data={sampleGraphData}
+              color="#3b82f6"
+            />
+            <ActionItemsLog />
+            <ExportOptions />
+          </main>
+        </div>
+      </DateProvider>
+    </TierProvider>
   );
 };
 
