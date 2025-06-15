@@ -26,6 +26,13 @@ const Index = () => {
     { day: "Fri", value: 88 },
   ];
 
+  const sampleMonthlyData = [
+    { day: "Week 1", value: 87 },
+    { day: "Week 2", value: 91 },
+    { day: "Week 3", value: 85 },
+    { day: "Week 4", value: 89 },
+  ];
+
   return (
     <TierProvider>
       <DateProvider>
@@ -36,8 +43,9 @@ const Index = () => {
             <MetricsTable />
             <MetricsLineGraph 
               category="Sample Metric"
-              data={sampleGraphData}
+              data={viewMode === "weekly" ? sampleGraphData : sampleMonthlyData}
               color="#3b82f6"
+              graphView={viewMode}
             />
             <ActionItemsLog />
             <ExportOptions />

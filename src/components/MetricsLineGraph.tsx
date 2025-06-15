@@ -13,15 +13,17 @@ import {
   ResponsiveContainer,
   Tooltip,
   Bar,
-  BarChart
+  BarChart,
+  Legend
 } from "recharts";
 
 interface MetricsLineGraphProps {
   category: string;
-  data: { day: string; value: number }[];
+  data: { day: string; value: number }[] | { category: string; data: { day: string; value: number }[]; color: string }[];
   color: string;
   graphType?: 'line' | 'bar';
   graphView?: 'weekly' | 'monthly';
+  showAllCategories?: boolean;
 }
 
 const MetricsLineGraph = ({ 
@@ -29,10 +31,25 @@ const MetricsLineGraph = ({
   data, 
   color,
   graphType = 'line',
-  graphView = 'weekly'
+  graphView = 'weekly',
+  showAllCategories = false
 }: MetricsLineGraphProps) => {
+  // Handle different data formats
+  const isMultiCategory = showAllCategories && Array.isArray(data) && data.length > 0 && 'category' in data[0];
+  
+  // Prepare data for multi-category view
+  const chartData = isMultiCategory 
+    ? (data as { category: string; data: { day: string; value: number }[]; color: string }[])[0]?.data?.map((item, index) => {
+        const dayData: any = { day: item.day };
+        (data as { category: string; data: { day: string; value: number }[]; color: string }[]).forEach(categoryData => {
+          dayData[categoryData.category] = categoryData.data[index]?.value || 0;
+        });
+        return dayData;
+      }) || []
+    : (data as { day: string; value: number }[]);
+
   // Ensure we have valid data by providing a fallback
-  const safeData = data && data.length > 0 ? data : graphView === 'weekly' ? [
+  const safeData = chartData && chartData.length > 0 ? chartData : graphView === 'weekly' ? [
     { day: "Mon", value: 0 },
     { day: "Tue", value: 0 },
     { day: "Wed", value: 0 },
@@ -44,6 +61,14 @@ const MetricsLineGraph = ({
     { day: "Week 3", value: 0 },
     { day: "Week 4", value: 0 },
   ];
+
+  const categoryColors = {
+    AVAILABILITY: "#0EA5E9",
+    DELIVERY: "#8B5CF6", 
+    QUALITY: "#10B981",
+    COST: "#F97316",
+    PEOPLE: "#6E59A5"
+  };
 
   return (
     <div className="h-64 w-full">
@@ -64,24 +89,45 @@ const MetricsLineGraph = ({
                     return (
                       <div className="p-2 bg-white border rounded shadow-sm">
                         <p className="font-medium">{`${label}`}</p>
-                        <p className="text-sm" style={{ color }}>
-                          {`Value: ${payload[0].value}`}
-                        </p>
+                        {payload.map((entry, index) => (
+                          <p key={index} className="text-sm" style={{ color: entry.color }}>
+                            {`${entry.dataKey}: ${entry.value}`}
+                          </p>
+                        ))}
                       </div>
                     );
                   }
                   return null;
                 }}
               />
-              <Line 
-                type="monotone"
-                dataKey="value" 
-                stroke={color}
-                strokeWidth={2}
-                activeDot={{ r: 6 }}
-                name="Value"
-                isAnimationActive={true}
-              />
+              {isMultiCategory && (
+                <Legend />
+              )}
+              {isMultiCategory ? (
+                // Render multiple lines for all categories
+                Object.keys(categoryColors).map((cat) => (
+                  <Line 
+                    key={cat}
+                    type="monotone"
+                    dataKey={cat}
+                    stroke={categoryColors[cat as keyof typeof categoryColors]}
+                    strokeWidth={2}
+                    activeDot={{ r: 6 }}
+                    name={cat}
+                    isAnimationActive={true}
+                  />
+                ))
+              ) : (
+                <Line 
+                  type="monotone"
+                  dataKey="value" 
+                  stroke={color}
+                  strokeWidth={2}
+                  activeDot={{ r: 6 }}
+                  name="Value"
+                  isAnimationActive={true}
+                />
+              )}
             </LineChart>
           ) : (
             <BarChart

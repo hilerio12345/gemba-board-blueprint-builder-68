@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -301,7 +302,7 @@ const MetricsTable = () => {
       </div>
 
       {viewMode === 'monthly' ? (
-        <MonthlyView metrics={metrics} />
+        <MonthlyView metrics={metrics} viewMode={viewMode} />
       ) : (
         <Table className="w-full">
           <MetricsTableHeader viewMode={viewMode} tier={currentTier.tier} />

@@ -1,24 +1,26 @@
 
 import React, { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isWeekend, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isWeekend, getDay, eachWeekOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { useDateContext } from "@/contexts/DateContext";
 import { Metric } from "@/types/metrics";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Activity, Truck, CheckCircle2, DollarSign, Users } from "lucide-react";
-import { useMetricsData } from "./useMetricsData";
+import MetricsLineGraph from "../MetricsLineGraph";
 
 interface MonthlyViewProps {
   metrics: Metric[];
+  viewMode?: 'monthly';
 }
 
-const MonthlyView = ({ metrics }: MonthlyViewProps) => {
+const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
   const { currentDate } = useDateContext();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 1 });
 
   // Get metrics grouped by category
   const metricsByCategory = metrics.reduce((acc, metric) => {
@@ -38,6 +40,57 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     4: "thursday",
     5: "friday",
     6: null, // Saturday (weekend)
+  };
+
+  // Generate monthly graph data for a specific category
+  const generateMonthlyGraphData = (category: string) => {
+    return weeks.map((weekStart, index) => {
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        .filter(day => !isWeekend(day) && isSameMonth(day, currentDate));
+
+      if (weekDays.length === 0) return { day: `Week ${index + 1}`, value: 0 };
+
+      const relevantMetrics = category === "ALL" 
+        ? metrics 
+        : metricsByCategory[category] || [];
+
+      if (relevantMetrics.length === 0) return { day: `Week ${index + 1}`, value: 0 };
+
+      let totalValue = 0;
+      let validDays = 0;
+
+      weekDays.forEach(day => {
+        const dayOfWeek = getDay(day);
+        const statusKey = dayOfWeekMapping[dayOfWeek];
+        
+        if (statusKey) {
+          relevantMetrics.forEach(metric => {
+            const dayValue = metric.category === "AVAILABILITY" 
+              ? (metric.availability?.[statusKey] ?? metric.value)
+              : (metric.dayValues?.[statusKey] ?? metric.value);
+            
+            totalValue += dayValue;
+            validDays++;
+          });
+        }
+      });
+
+      const averageValue = validDays > 0 ? totalValue / validDays : 0;
+      return { day: `Week ${index + 1}`, value: Math.round(averageValue * 10) / 10 };
+    });
+  };
+
+  // Generate data for all categories combined
+  const generateAllCategoriesData = () => {
+    const categories = ['AVAILABILITY', 'DELIVERY', 'QUALITY', 'COST', 'PEOPLE'];
+    const colors = ['#0EA5E9', '#8B5CF6', '#10B981', '#F97316', '#6E59A5'];
+    
+    return categories.map((category, index) => ({
+      category,
+      data: generateMonthlyGraphData(category),
+      color: colors[index]
+    }));
   };
 
   // Helper function to get status for a specific day and category directly from the metrics data
@@ -156,8 +209,19 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
     }
   };
 
+  const getMetricColor = (category: string) => {
+    switch(category) {
+      case "AVAILABILITY": return "#0EA5E9"; // blue
+      case "DELIVERY": return "#8B5CF6"; // purple
+      case "QUALITY": return "#10B981"; // green
+      case "COST": return "#F97316"; // orange
+      case "PEOPLE": return "#6E59A5"; // dark purple
+      default: return "#8E9196"; // gray
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow space-y-6">
       <div className="p-4 border-b">
         <Tabs 
           value={selectedCategory} 
@@ -188,7 +252,33 @@ const MonthlyView = ({ metrics }: MonthlyViewProps) => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={selectedCategory} className="mt-4">
+          <TabsContent value={selectedCategory} className="mt-4 space-y-6">
+            {/* Monthly Graph */}
+            <div>
+              {selectedCategory === "ALL" ? (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">All Categories Monthly Trends</h3>
+                  <MetricsLineGraph
+                    category="All Categories"
+                    data={generateAllCategoriesData()}
+                    color="#3b82f6"
+                    graphType="line"
+                    graphView="monthly"
+                    showAllCategories={true}
+                  />
+                </div>
+              ) : (
+                <MetricsLineGraph
+                  category={selectedCategory}
+                  data={generateMonthlyGraphData(selectedCategory)}
+                  color={getMetricColor(selectedCategory)}
+                  graphType="line"
+                  graphView="monthly"
+                />
+              )}
+            </div>
+
+            {/* Calendar View */}
             <div className="grid grid-cols-7 gap-1">
               {/* Calendar header - starting with Monday */}
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
