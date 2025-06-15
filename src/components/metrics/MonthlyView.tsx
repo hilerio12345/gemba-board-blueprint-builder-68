@@ -5,7 +5,8 @@ import { useDateContext } from "@/contexts/DateContext";
 import { Metric } from "@/types/metrics";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Activity, Truck, CheckCircle2, DollarSign, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, Truck, CheckCircle2, DollarSign, Users, TrendingUp, TrendingDown, AlertTriangle, Target } from "lucide-react";
 import MetricsLineGraph from "../MetricsLineGraph";
 
 interface MonthlyViewProps {
@@ -31,7 +32,6 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
     return acc;
   }, {} as Record<string, Metric[]>);
 
-  // Map day of week to our status keys
   const dayOfWeekMapping: Record<number, keyof Metric["status"] | null> = {
     0: null, // Sunday (weekend)
     1: "monday",
@@ -81,7 +81,6 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
     });
   };
 
-  // Generate data for all categories combined
   const generateAllCategoriesData = () => {
     const categories = ['AVAILABILITY', 'DELIVERY', 'QUALITY', 'COST', 'PEOPLE'];
     const colors = ['#0EA5E9', '#8B5CF6', '#10B981', '#F97316', '#6E59A5'];
@@ -93,28 +92,21 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
     }));
   };
 
-  // Helper function to get status for a specific day and category directly from the metrics data
   const getDayStatusForCategory = (day: Date, category: string) => {
-    // First check if it's a weekend - these should always be gray
     if (isWeekend(day)) return "gray";
-    
-    // Then check if it's in the current month
     if (!isSameMonth(day, currentDate)) return "gray";
 
     const dayOfWeek = getDay(day);
     const statusKey = dayOfWeekMapping[dayOfWeek];
     
-    // Return gray for weekends
     if (!statusKey) return "gray";
     
-    // If we're looking at all categories or a specific one
     const relevantMetrics = category === "ALL" 
       ? metrics 
       : metricsByCategory[category] || [];
     
     if (relevantMetrics.length === 0) return "gray";
     
-    // For ALL category view, prioritize red > yellow > green
     if (category === "ALL") {
       const hasRed = relevantMetrics.some(metric => metric.status[statusKey] === "red");
       if (hasRed) return "red";
@@ -127,13 +119,11 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
       
       return "gray";
     } else {
-      // For specific category, just use the first metric's status
       const metric = relevantMetrics[0];
       return metric ? metric.status[statusKey] : "gray";
     }
   };
 
-  // Helper function to get status for each category on a specific day
   const getDayDetailedStatus = (day: Date) => {
     if (isWeekend(day) || !isSameMonth(day, currentDate)) {
       return {
@@ -165,18 +155,8 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
     };
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "red": return "bg-red-500";
-      case "yellow": return "bg-yellow-400";
-      case "green": return "bg-green-500";
-      default: return "bg-gray-200";
-    }
-  };
-
-  // Calculate totals for summary
-  const calculateTotals = (category?: string) => {
-    // Only consider weekdays in the current month
+  // Calculate insights and key metrics
+  const calculateInsights = () => {
     const workdays = days.filter(day => 
       isSameMonth(day, currentDate) && !isWeekend(day)
     );
@@ -188,14 +168,55 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
       gray: 0
     };
     
-    workdays.forEach(day => {
-      const status = category 
-        ? getDayStatusForCategory(day, category)
-        : getDayStatusForCategory(day, "ALL");
-      totals[status as keyof typeof totals]++;
-    });
+    const categoryTotals: Record<string, typeof totals> = {};
     
-    return totals;
+    ['AVAILABILITY', 'DELIVERY', 'QUALITY', 'COST', 'PEOPLE'].forEach(category => {
+      categoryTotals[category] = { green: 0, yellow: 0, red: 0, gray: 0 };
+      
+      workdays.forEach(day => {
+        const status = getDayStatusForCategory(day, category);
+        categoryTotals[category][status as keyof typeof totals]++;
+        
+        if (category === 'AVAILABILITY') {
+          totals[status as keyof typeof totals]++;
+        }
+      });
+    });
+
+    // Calculate performance percentages
+    const totalWorkdays = workdays.length;
+    const categoryPerformance = Object.entries(categoryTotals).map(([category, counts]) => {
+      const successRate = totalWorkdays > 0 ? ((counts.green / totalWorkdays) * 100) : 0;
+      const warningRate = totalWorkdays > 0 ? ((counts.yellow / totalWorkdays) * 100) : 0;
+      const criticalRate = totalWorkdays > 0 ? ((counts.red / totalWorkdays) * 100) : 0;
+      
+      return {
+        category,
+        successRate: Math.round(successRate),
+        warningRate: Math.round(warningRate),
+        criticalRate: Math.round(criticalRate),
+        trend: successRate >= 80 ? 'good' : successRate >= 60 ? 'warning' : 'critical'
+      };
+    });
+
+    return {
+      totalWorkdays,
+      overallSuccessRate: Math.round((totals.green / totalWorkdays) * 100),
+      categoryPerformance,
+      criticalAreas: categoryPerformance.filter(cat => cat.criticalRate > 20),
+      topPerformers: categoryPerformance.filter(cat => cat.successRate >= 80)
+    };
+  };
+
+  const insights = calculateInsights();
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "red": return "bg-red-500";
+      case "yellow": return "bg-yellow-400";
+      case "green": return "bg-green-500";
+      default: return "bg-gray-200";
+    }
   };
 
   const getCategoryIcon = (category: string) => {
@@ -211,164 +232,293 @@ const MonthlyView = ({ metrics, viewMode = 'monthly' }: MonthlyViewProps) => {
 
   const getMetricColor = (category: string) => {
     switch(category) {
-      case "AVAILABILITY": return "#0EA5E9"; // blue
-      case "DELIVERY": return "#8B5CF6"; // purple
-      case "QUALITY": return "#10B981"; // green
-      case "COST": return "#F97316"; // orange
-      case "PEOPLE": return "#6E59A5"; // dark purple
-      default: return "#8E9196"; // gray
+      case "AVAILABILITY": return "#0EA5E9";
+      case "DELIVERY": return "#8B5CF6";
+      case "QUALITY": return "#10B981";
+      case "COST": return "#F97316";
+      case "PEOPLE": return "#6E59A5";
+      default: return "#8E9196";
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow space-y-6">
-      <div className="p-4 border-b">
-        <Tabs 
-          value={selectedCategory} 
-          onValueChange={setSelectedCategory}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-6 w-full">
-            <TabsTrigger value="ALL">All</TabsTrigger>
-            <TabsTrigger value="AVAILABILITY" className="flex items-center gap-2">
+    <div className="space-y-6">
+      {/* Monthly Insights Header */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-blue-800 flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Overall Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-900">{insights.overallSuccessRate}%</div>
+            <p className="text-xs text-blue-600 mt-1">Success Rate This Month</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Top Performers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-900">{insights.topPerformers.length}</div>
+            <p className="text-xs text-green-600 mt-1">Categories Above 80%</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-red-800 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Critical Areas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-900">{insights.criticalAreas.length}</div>
+            <p className="text-xs text-red-600 mt-1">Categories Need Attention</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-purple-800 flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              <span>Availability</span>
-            </TabsTrigger>
-            <TabsTrigger value="DELIVERY" className="flex items-center gap-2">
-              <Truck className="h-4 w-4" />
-              <span>Delivery</span>
-            </TabsTrigger>
-            <TabsTrigger value="QUALITY" className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Quality</span>
-            </TabsTrigger>
-            <TabsTrigger value="COST" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              <span>Cost</span>
-            </TabsTrigger>
-            <TabsTrigger value="PEOPLE" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>People</span>
-            </TabsTrigger>
-          </TabsList>
+              Working Days
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-900">{insights.totalWorkdays}</div>
+            <p className="text-xs text-purple-600 mt-1">Total This Month</p>
+          </CardContent>
+        </Card>
+      </div>
 
-          <TabsContent value={selectedCategory} className="mt-4 space-y-6">
-            {/* Monthly Graph */}
-            <div>
-              {selectedCategory === "ALL" ? (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">All Categories Monthly Trends</h3>
-                  <MetricsLineGraph
-                    category="All Categories"
-                    data={generateAllCategoriesData()}
-                    color="#3b82f6"
-                    graphType="line"
-                    graphView="monthly"
-                    showAllCategories={true}
-                  />
+      {/* Performance Insights */}
+      <Card className="bg-white shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Category Performance Insights
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {insights.categoryPerformance.map((perf) => (
+              <div key={perf.category} className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  {getCategoryIcon(perf.category)}
+                  <span className="ml-2 text-sm font-medium">{perf.category}</span>
                 </div>
-              ) : (
-                <MetricsLineGraph
-                  category={selectedCategory}
-                  data={generateMonthlyGraphData(selectedCategory)}
-                  color={getMetricColor(selectedCategory)}
-                  graphType="line"
-                  graphView="monthly"
-                />
-              )}
-            </div>
-
-            {/* Calendar View */}
-            <div className="grid grid-cols-7 gap-1">
-              {/* Calendar header - starting with Monday */}
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                <div
-                  key={day}
-                  className="h-8 flex items-center justify-center font-semibold text-gray-600"
-                >
-                  {day}
-                </div>
-              ))}
-              
-              {/* Calculate offset for first day to align with Monday-start */}
-              {Array.from({ length: (getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1) }).map((_, i) => (
-                <div key={`empty-${i}`} className="aspect-square bg-white"></div>
-              ))}
-              
-              {/* Calendar days */}
-              {days.map((day, index) => {
-                const status = selectedCategory === "ALL" ? 
-                  getDayStatusForCategory(day, "ALL") : 
-                  getDayStatusForCategory(day, selectedCategory);
-                
-                const dayStatuses = getDayDetailedStatus(day);
-                
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      aspect-square p-1 flex flex-col
-                      ${!isSameMonth(day, currentDate) ? "opacity-50 bg-gray-100" : "bg-white"}
-                      rounded-lg border
-                    `}
-                  >
-                    <span className="text-xs font-medium text-gray-600 mb-1">
-                      {format(day, "d")}
-                    </span>
-                    
-                    {selectedCategory === "ALL" ? (
-                      <div className="grid grid-cols-2 gap-1 flex-1">
-                        <div className={`${getStatusColor(dayStatuses.AVAILABILITY)} rounded-sm flex items-center justify-center`}>
-                          <Activity className="h-3 w-3 text-white" />
-                        </div>
-                        <div className={`${getStatusColor(dayStatuses.DELIVERY)} rounded-sm flex items-center justify-center`}>
-                          <Truck className="h-3 w-3 text-white" />
-                        </div>
-                        <div className={`${getStatusColor(dayStatuses.QUALITY)} rounded-sm flex items-center justify-center`}>
-                          <CheckCircle2 className="h-3 w-3 text-white" />
-                        </div>
-                        <div className={`${getStatusColor(dayStatuses.COST)} rounded-sm flex items-center justify-center`}>
-                          <DollarSign className="h-3 w-3 text-white" />
-                        </div>
-                        <div className={`${getStatusColor(dayStatuses.PEOPLE)} rounded-sm col-span-2 flex items-center justify-center`}>
-                          <Users className="h-3 w-3 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`flex-1 ${getStatusColor(status)} rounded-sm flex items-center justify-center`}>
-                        {getCategoryIcon(selectedCategory)}
-                      </div>
+                <div className="space-y-1">
+                  <div className={`text-lg font-bold ${
+                    perf.trend === 'good' ? 'text-green-600' : 
+                    perf.trend === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {perf.successRate}%
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${
+                        perf.trend === 'good' ? 'bg-green-500' : 
+                        perf.trend === 'warning' ? 'bg-yellow-400' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${perf.successRate}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {perf.criticalRate > 0 && (
+                      <span className="text-red-500">{perf.criticalRate}% critical</span>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Summary section */}
-      <div className="p-4 border-t">
-        <h3 className="text-sm font-medium mb-2">Monthly Summary: {selectedCategory === "ALL" ? "All Categories" : selectedCategory}</h3>
-        <div className="flex gap-3 flex-wrap">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-full bg-green-500"></span>
-            <span>Green: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).green}</span>
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
-            <span>Yellow: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).yellow}</span>
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-full bg-red-500"></span>
-            <span>Red: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).red}</span>
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-full bg-gray-200"></span>
-            <span>N/A: {calculateTotals(selectedCategory !== "ALL" ? selectedCategory : undefined).gray}</span>
-          </Badge>
-        </div>
-      </div>
+      {/* Main Content */}
+      <Card className="bg-white shadow-lg">
+        <CardHeader>
+          <Tabs 
+            value={selectedCategory} 
+            onValueChange={setSelectedCategory}
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-6 w-full">
+              <TabsTrigger value="ALL" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                All
+              </TabsTrigger>
+              <TabsTrigger value="AVAILABILITY" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Availability
+              </TabsTrigger>
+              <TabsTrigger value="DELIVERY" className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Delivery
+              </TabsTrigger>
+              <TabsTrigger value="QUALITY" className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Quality
+              </TabsTrigger>
+              <TabsTrigger value="COST" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Cost
+              </TabsTrigger>
+              <TabsTrigger value="PEOPLE" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                People
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={selectedCategory} className="mt-6 space-y-6">
+              {/* Monthly Graph */}
+              <Card>
+                <CardContent className="pt-6">
+                  {selectedCategory === "ALL" ? (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-blue-600" />
+                        All Categories Monthly Trends
+                      </h3>
+                      <MetricsLineGraph
+                        category="All Categories"
+                        data={generateAllCategoriesData()}
+                        color="#3b82f6"
+                        graphType="line"
+                        graphView="monthly"
+                        showAllCategories={true}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center gap-2">
+                        {getCategoryIcon(selectedCategory)}
+                        {selectedCategory} Monthly Trend
+                      </h3>
+                      <MetricsLineGraph
+                        category={selectedCategory}
+                        data={generateMonthlyGraphData(selectedCategory)}
+                        color={getMetricColor(selectedCategory)}
+                        graphType="line"
+                        graphView="monthly"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Calendar View */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Monthly Calendar View
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-7 gap-1">
+                    {/* Calendar header */}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                      <div
+                        key={day}
+                        className="h-8 flex items-center justify-center font-semibold text-gray-600 bg-gray-50 rounded"
+                      >
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {/* Calendar offset */}
+                    {Array.from({ length: (getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1) }).map((_, i) => (
+                      <div key={`empty-${i}`} className="aspect-square bg-white"></div>
+                    ))}
+                    
+                    {/* Calendar days */}
+                    {days.map((day, index) => {
+                      const status = selectedCategory === "ALL" ? 
+                        getDayStatusForCategory(day, "ALL") : 
+                        getDayStatusForCategory(day, selectedCategory);
+                      
+                      const dayStatuses = getDayDetailedStatus(day);
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`
+                            aspect-square p-1 flex flex-col transition-all duration-200 hover:scale-105
+                            ${!isSameMonth(day, currentDate) ? "opacity-50 bg-gray-100" : "bg-white hover:shadow-md"}
+                            rounded-lg border-2 ${status === 'red' ? 'border-red-300' : status === 'yellow' ? 'border-yellow-300' : status === 'green' ? 'border-green-300' : 'border-gray-200'}
+                          `}
+                        >
+                          <span className="text-xs font-medium text-gray-600 mb-1">
+                            {format(day, "d")}
+                          </span>
+                          
+                          {selectedCategory === "ALL" ? (
+                            <div className="grid grid-cols-2 gap-1 flex-1">
+                              <div className={`${getStatusColor(dayStatuses.AVAILABILITY)} rounded-sm flex items-center justify-center shadow-sm`}>
+                                <Activity className="h-3 w-3 text-white" />
+                              </div>
+                              <div className={`${getStatusColor(dayStatuses.DELIVERY)} rounded-sm flex items-center justify-center shadow-sm`}>
+                                <Truck className="h-3 w-3 text-white" />
+                              </div>
+                              <div className={`${getStatusColor(dayStatuses.QUALITY)} rounded-sm flex items-center justify-center shadow-sm`}>
+                                <CheckCircle2 className="h-3 w-3 text-white" />
+                              </div>
+                              <div className={`${getStatusColor(dayStatuses.COST)} rounded-sm flex items-center justify-center shadow-sm`}>
+                                <DollarSign className="h-3 w-3 text-white" />
+                              </div>
+                              <div className={`${getStatusColor(dayStatuses.PEOPLE)} rounded-sm col-span-2 flex items-center justify-center shadow-sm`}>
+                                <Users className="h-3 w-3 text-white" />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={`flex-1 ${getStatusColor(status)} rounded-sm flex items-center justify-center shadow-sm`}>
+                              {getCategoryIcon(selectedCategory)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardHeader>
+      </Card>
+
+      {/* Summary Section */}
+      <Card className="bg-gradient-to-r from-gray-50 to-gray-100">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Target className="h-5 w-5 text-blue-600" />
+            Monthly Summary: {selectedCategory === "ALL" ? "All Categories" : selectedCategory}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3 flex-wrap">
+            <Badge variant="outline" className="flex items-center gap-2 bg-green-50 border-green-200 text-green-800">
+              <span className="h-3 w-3 rounded-full bg-green-500"></span>
+              <span>Green: {insights.categoryPerformance.find(p => selectedCategory === "ALL" || p.category === selectedCategory)?.successRate || 0}% of days</span>
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-2 bg-yellow-50 border-yellow-200 text-yellow-800">
+              <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
+              <span>Yellow: {insights.categoryPerformance.find(p => selectedCategory === "ALL" || p.category === selectedCategory)?.warningRate || 0}% of days</span>
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-2 bg-red-50 border-red-200 text-red-800">
+              <span className="h-3 w-3 rounded-full bg-red-500"></span>
+              <span>Red: {insights.categoryPerformance.find(p => selectedCategory === "ALL" || p.category === selectedCategory)?.criticalRate || 0}% of days</span>
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
