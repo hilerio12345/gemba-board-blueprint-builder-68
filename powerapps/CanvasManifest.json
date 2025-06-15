@@ -1,0 +1,52 @@
+
+{
+  "FormatVersion": "0.24",
+  "Properties": {
+    "AppCreationSource": "AppFromScratch",
+    "AppDescription": "Electronic Gemba Board for multi-tiered Lean Management System",
+    "AppDisplayName": "Gemba Board",
+    "AppPreviewFlagsMap": {},
+    "Author": "",
+    "BackgroundColor": "RGBA(248, 249, 250, 1)",
+    "CreatedByActionId": "",
+    "CreatedTime": "2025-01-15T10:00:00.000Z",
+    "DefaultConnectedDataSourceMaxGetRowsCount": 500,
+    "DocumentAppType": "DesktopOrTabletApp",
+    "DocumentLayoutHeight": 768,
+    "DocumentLayoutMaintainAspectRatio": false,
+    "DocumentLayoutOrientation": "landscape",
+    "DocumentLayoutScaleToFit": true,
+    "DocumentLayoutWidth": 1366,
+    "DocumentType": "App",
+    "EnableInstrumentation": false,
+    "FileID": "00000000-0000-0000-0000-000000000000",
+    "Id": "00000000-0000-0000-0000-000000000000",
+    "InstrumentationKey": "",
+    "LocalConnectionReferences": {},
+    "LocalDatabaseReferences": {},
+    "Name": "GembaBoard",
+    "OriginatingVersion": "1.0",
+    "ParserErrorCount": 0,
+    "PublishTarget": "player",
+    "PublishedDate": "1900-01-01T00:00:00.000Z",
+    "ScreenHeight": 768,
+    "ScreenWidth": 1366,
+    "TestSteps": "",
+    "Version": "2025011501"
+  },
+  "Header": {
+    "DocVersion": "1.334",
+    "MinVersionToLoad": "1.331"
+  },
+  "PublishInfo": {
+    "AppName": "GembaBoard",
+    "BackgroundColor": "RGBA(248, 249, 250, 1)",
+    "IconColor": "RGBA(26, 58, 95, 1)",
+    "IconName": "Activity",
+    "LogoFileName": "",
+    "PublishDataLocally": false,
+    "PublishResourcesLocally": false,
+    "PublishTarget": "player",
+    "UserLocale": "en-US"
+  }
+}

@@ -1,0 +1,115 @@
+
+App As appinfo:
+    BackEnabled: =false
+    OnStart: |-
+        =// Initialize global variables for the Gemba Board
+        Set(gblCurrentTier, "TIER 1");
+        Set(gblBoardId, "T1-STD-" & Text(RandBetween(1000, 9999)));
+        Set(gblLineOfProduction, "STANDARD DD214s");
+        Set(gblDirectorate, "DPA");
+        Set(gblOfficeCode, "DPAA");
+        Set(gblBriefingTime, "0830");
+        Set(gblCurrentDate, Today());
+        Set(gblViewMode, "weekly");
+        
+        // Initialize metrics data collection
+        ClearCollect(colMetrics,
+            {
+                id: 1,
+                category: "AVAILABILITY",
+                goal: "100%",
+                monday: "green",
+                tuesday: "green", 
+                wednesday: "yellow",
+                thursday: "green",
+                friday: "green",
+                notes: "Systems available throughout the week",
+                greenThreshold: "≥ 98%",
+                yellowThreshold: "90-97%",
+                redThreshold: "< 90%"
+            },
+            {
+                id: 2,
+                category: "DELIVERY",
+                goal: "4",
+                monday: "green",
+                tuesday: "green",
+                wednesday: "green", 
+                thursday: "red",
+                friday: "yellow",
+                notes: "4 DVs/wk | 4 DVs | = 4 total",
+                greenThreshold: "≥ 4",
+                yellowThreshold: "3",
+                redThreshold: "< 3"
+            },
+            {
+                id: 3,
+                category: "QUALITY",
+                goal: "75%",
+                monday: "green",
+                tuesday: "yellow",
+                wednesday: "yellow",
+                thursday: "green", 
+                friday: "green",
+                notes: "3rd prty PV > Target",
+                greenThreshold: "≥ 75%",
+                yellowThreshold: "65-74%",
+                redThreshold: "< 65%"
+            },
+            {
+                id: 4,
+                category: "COST",
+                goal: "<5%",
+                monday: "yellow",
+                tuesday: "green",
+                wednesday: "green",
+                thursday: "green",
+                friday: "red",
+                notes: "Overtime % above target on Friday",
+                greenThreshold: "< 5%",
+                yellowThreshold: "5-7%",
+                redThreshold: "> 7%"
+            },
+            {
+                id: 5,
+                category: "PEOPLE",
+                goal: "95%",
+                monday: "green",
+                tuesday: "green",
+                wednesday: "green",
+                thursday: "green",
+                friday: "yellow",
+                notes: "Training compliance on track",
+                greenThreshold: "≥ 95%",
+                yellowThreshold: "85-94%",
+                redThreshold: "< 85%"
+            }
+        );
+        
+        // Initialize action items collection
+        ClearCollect(colActionItems,
+            {
+                id: 1,
+                date: Date(2025,4,10),
+                owner: "J. Smith",
+                issue: "Training documentation needs update",
+                dueDate: Date(2025,4,17),
+                status: "In Progress"
+            },
+            {
+                id: 2,
+                date: Date(2025,4,11),
+                owner: "R. Johnson", 
+                issue: "System availability tracking tool calibration",
+                dueDate: Date(2025,4,18),
+                status: "Complete"
+            },
+            {
+                id: 3,
+                date: Date(2025,4,12),
+                owner: "T. Williams",
+                issue: "Quality metrics reporting inconsistency", 
+                dueDate: Date(2025,4,19),
+                status: "In Progress"
+            }
+        );

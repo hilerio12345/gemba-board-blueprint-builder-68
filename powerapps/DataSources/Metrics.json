@@ -1,0 +1,73 @@
+
+{
+  "DisplayName": "Metrics",
+  "Name": "Metrics",
+  "Type": "CollectionDataSourceInfo",
+  "TableDefinition": {
+    "Name": "Metrics",
+    "Type": "Table",
+    "DisplayName": "Metrics",
+    "Properties": [
+      {
+        "Name": "id",
+        "Type": "Number",
+        "DisplayName": "ID"
+      },
+      {
+        "Name": "category",
+        "Type": "Text",
+        "DisplayName": "Category"
+      },
+      {
+        "Name": "goal",
+        "Type": "Text",
+        "DisplayName": "Goal"
+      },
+      {
+        "Name": "monday",
+        "Type": "Text",
+        "DisplayName": "Monday"
+      },
+      {
+        "Name": "tuesday", 
+        "Type": "Text",
+        "DisplayName": "Tuesday"
+      },
+      {
+        "Name": "wednesday",
+        "Type": "Text",
+        "DisplayName": "Wednesday"
+      },
+      {
+        "Name": "thursday",
+        "Type": "Text",
+        "DisplayName": "Thursday"
+      },
+      {
+        "Name": "friday",
+        "Type": "Text",
+        "DisplayName": "Friday"
+      },
+      {
+        "Name": "notes",
+        "Type": "Text",
+        "DisplayName": "Notes"
+      },
+      {
+        "Name": "greenThreshold",
+        "Type": "Text",
+        "DisplayName": "Green Threshold"
+      },
+      {
+        "Name": "yellowThreshold",
+        "Type": "Text", 
+        "DisplayName": "Yellow Threshold"
+      },
+      {
+        "Name": "redThreshold",
+        "Type": "Text",
+        "DisplayName": "Red Threshold"
+      }
+    ]
+  }
+}

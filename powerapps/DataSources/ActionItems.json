@@ -1,0 +1,43 @@
+
+{
+  "DisplayName": "ActionItems",
+  "Name": "ActionItems", 
+  "Type": "CollectionDataSourceInfo",
+  "TableDefinition": {
+    "Name": "ActionItems",
+    "Type": "Table",
+    "DisplayName": "Action Items",
+    "Properties": [
+      {
+        "Name": "id",
+        "Type": "Number",
+        "DisplayName": "ID"
+      },
+      {
+        "Name": "date",
+        "Type": "DateTime",
+        "DisplayName": "Date"
+      },
+      {
+        "Name": "owner", 
+        "Type": "Text",
+        "DisplayName": "Owner"
+      },
+      {
+        "Name": "issue",
+        "Type": "Text",
+        "DisplayName": "Issue"
+      },
+      {
+        "Name": "dueDate",
+        "Type": "DateTime",
+        "DisplayName": "Due Date"
+      },
+      {
+        "Name": "status",
+        "Type": "Text",
+        "DisplayName": "Status"
+      }
+    ]
+  }
+}
