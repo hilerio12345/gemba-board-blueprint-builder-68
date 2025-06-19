@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,23 +35,16 @@ const PDCADialog = ({ actionItemId, initialData, onSave }: PDCADialogProps) => {
   };
 
   const PDCACircle = () => (
-    <div className="relative w-16 h-16 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
-      {/* Plus sign shape */}
-      <div className="relative">
-        {/* Vertical bar */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 w-3 h-12 bg-blue-600 rounded"></div>
-        {/* Horizontal bar */}
-        <div className="absolute top-1/2 transform -translate-y-1/2 w-12 h-3 bg-blue-600 rounded"></div>
-        
-        {/* Letters positioned around the plus sign */}
+    <div className="relative w-16 h-16 rounded-full border-4 border-blue-600 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
+      <div className="relative w-full h-full">
         {/* P at the top */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 text-xs font-bold text-blue-800">P</div>
+        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 text-sm font-bold text-blue-800">P</div>
         {/* D on the right */}
-        <div className="absolute right-0 top-1/2 transform translate-x-4 -translate-y-1/2 text-xs font-bold text-blue-800">D</div>
+        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 text-sm font-bold text-blue-800">D</div>
         {/* C at the bottom */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-4 text-xs font-bold text-blue-800">C</div>
+        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-sm font-bold text-blue-800">C</div>
         {/* A on the left */}
-        <div className="absolute left-0 top-1/2 transform -translate-x-4 -translate-y-1/2 text-xs font-bold text-blue-800">A</div>
+        <div className="absolute left-1 top-1/2 transform -translate-y-1/2 text-sm font-bold text-blue-800">A</div>
       </div>
     </div>
   );
