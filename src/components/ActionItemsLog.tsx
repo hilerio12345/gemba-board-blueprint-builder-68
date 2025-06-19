@@ -91,6 +91,13 @@ const ActionItemsLog = () => {
     tier: `Tier ${tierLevel}`
   });
 
+  // Debug logging
+  useEffect(() => {
+    console.log("ActionItemsLog - Initial items:", initialItems);
+    console.log("ActionItemsLog - Current actionItems:", actionItems);
+    console.log("ActionItemsLog - New item state:", newItem);
+  }, [actionItems, newItem]);
+
   // Calculate days since creation for color coding
   const getDaysSinceCreation = (dateString: string) => {
     const creationDate = new Date(dateString);
@@ -141,6 +148,8 @@ const ActionItemsLog = () => {
   };
 
   const handleAddNewItem = () => {
+    console.log("Adding new item with owner:", newItem.owner);
+    
     if (!newItem.owner || !newItem.issue || !newItem.dueDate) {
       toast({
         title: "Missing information",
@@ -155,6 +164,8 @@ const ActionItemsLog = () => {
       id: (actionItems.length + 1).toString(),
       tier: `Tier ${tierLevel}`
     };
+    
+    console.log("Updated new item before adding:", updatedNewItem);
     
     setActionItems([...actionItems, updatedNewItem]);
     
@@ -175,12 +186,16 @@ const ActionItemsLog = () => {
   };
 
   const handleItemChange = (id: string, field: keyof ActionItem, value: string) => {
+    console.log(`Updating item ${id}, field ${field} to:`, value);
+    
     setActionItems(actionItems.map(item => {
       if (item.id === id) {
-        return {
+        const updatedItem = {
           ...item,
           [field]: value
         };
+        console.log("Updated item:", updatedItem);
+        return updatedItem;
       }
       return item;
     }));
@@ -297,6 +312,8 @@ const ActionItemsLog = () => {
 
   const filteredItems = getFilteredItems();
 
+  console.log("Rendering with filtered items:", filteredItems);
+
   return (
     <div className="overflow-x-auto">
       <div className="p-2 bg-gray-50 border-b text-center text-sm font-medium">
@@ -336,91 +353,95 @@ const ActionItemsLog = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => (
-              <TableRow key={item.id} className={`hover:bg-gray-50 ${getRowColor(item)}`}>
-                <TableCell className="p-1">
-                  <div className="flex items-center gap-2">
+            {filteredItems.map((item) => {
+              console.log("Rendering item:", item, "Owner value:", item.owner);
+              return (
+                <TableRow key={item.id} className={`hover:bg-gray-50 ${getRowColor(item)}`}>
+                  <TableCell className="p-1">
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="date"
+                        value={item.date} 
+                        onChange={(e) => handleItemChange(item.id, 'date', e.target.value)} 
+                        className="h-8"
+                      />
+                      {getUrgencyIndicator(item)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="p-1">
                     <Input 
-                      type="date"
-                      value={item.date} 
-                      onChange={(e) => handleItemChange(item.id, 'date', e.target.value)} 
+                      value={item.owner || ""} 
+                      onChange={(e) => handleItemChange(item.id, 'owner', e.target.value)} 
+                      className="h-8"
+                      placeholder="Owner name"
+                    />
+                  </TableCell>
+                  <TableCell className="p-1">
+                    <Input 
+                      value={item.issue} 
+                      onChange={(e) => handleItemChange(item.id, 'issue', e.target.value)} 
                       className="h-8"
                     />
-                    {getUrgencyIndicator(item)}
-                  </div>
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input 
-                    value={item.owner} 
-                    onChange={(e) => handleItemChange(item.id, 'owner', e.target.value)} 
-                    className="h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input 
-                    value={item.issue} 
-                    onChange={(e) => handleItemChange(item.id, 'issue', e.target.value)} 
-                    className="h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input 
-                    type="date"
-                    value={item.dueDate} 
-                    onChange={(e) => handleItemChange(item.id, 'dueDate', e.target.value)} 
-                    className="h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Select 
-                    value={item.status} 
-                    onValueChange={(value) => handleItemChange(item.id, 'status', value)}
-                  >
-                    <SelectTrigger className={`h-8 text-sm border ${getStatusBadgeColor(item.status)}`}>
-                      <SelectValue placeholder="Status">
-                        {getStatusText(item.status)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NS">Not Started</SelectItem>
-                      <SelectItem value="IP">In Progress</SelectItem>
-                      <SelectItem value="C">Complete</SelectItem>
-                      <SelectItem value="OD">Overdue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="p-1">
-                  <PDCADialog 
-                    actionItemId={item.id}
-                    initialData={item.pdcaData}
-                    onSave={handlePDCASave}
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <div className="flex gap-1">
-                    {item.status === 'C' && (
+                  </TableCell>
+                  <TableCell className="p-1">
+                    <Input 
+                      type="date"
+                      value={item.dueDate} 
+                      onChange={(e) => handleItemChange(item.id, 'dueDate', e.target.value)} 
+                      className="h-8"
+                    />
+                  </TableCell>
+                  <TableCell className="p-1">
+                    <Select 
+                      value={item.status} 
+                      onValueChange={(value) => handleItemChange(item.id, 'status', value)}
+                    >
+                      <SelectTrigger className={`h-8 text-sm border ${getStatusBadgeColor(item.status)}`}>
+                        <SelectValue placeholder="Status">
+                          {getStatusText(item.status)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NS">Not Started</SelectItem>
+                        <SelectItem value="IP">In Progress</SelectItem>
+                        <SelectItem value="C">Complete</SelectItem>
+                        <SelectItem value="OD">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="p-1">
+                    <PDCADialog 
+                      actionItemId={item.id}
+                      initialData={item.pdcaData}
+                      onSave={handlePDCASave}
+                    />
+                  </TableCell>
+                  <TableCell className="p-1">
+                    <div className="flex gap-1">
+                      {item.status === 'C' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleArchiveItem(item.id)}
+                          className="h-8 w-8"
+                          title="Archive completed item"
+                        >
+                          <Archive className="h-4 w-4 text-green-600" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => handleArchiveItem(item.id)}
+                        onClick={() => handleDeleteItem(item.id)}
                         className="h-8 w-8"
-                        title="Archive completed item"
                       >
-                        <Archive className="h-4 w-4 text-green-600" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             
             <TableRow className="bg-gray-50">
               <TableCell className="p-1">
@@ -434,7 +455,10 @@ const ActionItemsLog = () => {
               <TableCell className="p-1">
                 <Input 
                   value={newItem.owner} 
-                  onChange={(e) => setNewItem({...newItem, owner: e.target.value})} 
+                  onChange={(e) => {
+                    console.log("New item owner changed to:", e.target.value);
+                    setNewItem({...newItem, owner: e.target.value});
+                  }} 
                   className="h-8"
                   placeholder="Owner"
                 />
