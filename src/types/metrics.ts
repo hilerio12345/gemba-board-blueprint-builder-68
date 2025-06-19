@@ -49,4 +49,21 @@ export interface ActionItem {
   issue: string;
   dueDate: Date;
   status: string;
+  tier?: string;
+  pdcaData?: {
+    plan: string;
+    do: string;
+    check: string;
+    act: string;
+  };
+}
+
+export interface ArchivedAction {
+  id: string;
+  date: string;
+  owner: string;
+  issue: string;
+  dueDate: string;
+  completedDate: string;
+  tier?: string;
 }
