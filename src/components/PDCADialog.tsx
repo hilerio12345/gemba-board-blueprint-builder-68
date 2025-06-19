@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,9 @@ const PDCADialog = ({ actionItemId, initialData, onSave }: PDCADialogProps) => {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Plan-Do-Check-Act Cycle</DialogTitle>
+          <DialogDescription>
+            Document your continuous improvement process using the PDCA methodology.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4">
           <div>
