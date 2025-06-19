@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Table, 
@@ -114,8 +113,16 @@ const ActionItemsLog = () => {
   const getUrgencyIndicator = (item: ActionItem) => {
     if (item.status === 'C') return null;
     const days = getDaysSinceCreation(item.date);
-    if (days >= 14) return <AlertTriangle className="h-4 w-4 text-red-500" title={`${days} days old - Overdue!`} />;
-    if (days >= 7) return <Clock className="h-4 w-4 text-yellow-500" title={`${days} days old - Action needed`} />;
+    if (days >= 14) return (
+      <span title={`${days} days old - Overdue!`}>
+        <AlertTriangle className="h-4 w-4 text-red-500" />
+      </span>
+    );
+    if (days >= 7) return (
+      <span title={`${days} days old - Action needed`}>
+        <Clock className="h-4 w-4 text-yellow-500" />
+      </span>
+    );
     return null;
   };
 
