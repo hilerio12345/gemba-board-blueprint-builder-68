@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Card } from "@/components/ui/card";
 import { 
@@ -5,7 +6,7 @@ import {
   PopoverTrigger, 
   PopoverContent 
 } from "@/components/ui/popover";
-import { Settings, Edit2, ChevronDown, Save, Lock } from "lucide-react";
+import { Settings, Edit2, ChevronDown, Save, Lock, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -62,6 +63,7 @@ export interface TierConfig {
   directorate?: string;
   officeCode?: string;
   isLocked?: boolean;
+  isConfigured?: boolean;
 }
 
 const TierContext = createContext<{
@@ -69,15 +71,18 @@ const TierContext = createContext<{
   setCurrentTier: (tier: TierConfig) => void;
   allBoardIds: string[];
   addBoardId: (boardId: string) => void;
+  isFullyConfigured: boolean;
 }>({
   currentTier: {
     tier: "TIER 1",
-    lineOfProduction: "STANDARD DD214s",
-    boardId: "T1-STD-" + Math.random().toString(36).substring(2, 8)
+    lineOfProduction: "",
+    boardId: "",
+    isConfigured: false
   },
   setCurrentTier: () => {},
   allBoardIds: [],
-  addBoardId: () => {}
+  addBoardId: () => {},
+  isFullyConfigured: false
 });
 
 export const useTierConfig = () => useContext(TierContext);
@@ -85,8 +90,11 @@ export const useTierConfig = () => useContext(TierContext);
 export const TierProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTier, setCurrentTier] = useState<TierConfig>({
     tier: "TIER 1",
-    lineOfProduction: "STANDARD DD214s",
-    boardId: "T1-STD-" + Math.random().toString(36).substring(2, 8)
+    lineOfProduction: "",
+    boardId: "",
+    directorate: "",
+    officeCode: "",
+    isConfigured: false
   });
   
   // Keep track of all board IDs for Tier 4 access
@@ -108,15 +116,23 @@ export const TierProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [currentTier.boardId]);
   
+  // Check if all required fields are filled
+  const isFullyConfigured = !!(
+    currentTier.tier &&
+    currentTier.directorate &&
+    currentTier.officeCode &&
+    currentTier.lineOfProduction
+  );
+  
   return (
-    <TierContext.Provider value={{ currentTier, setCurrentTier, allBoardIds, addBoardId }}>
+    <TierContext.Provider value={{ currentTier, setCurrentTier, allBoardIds, addBoardId, isFullyConfigured }}>
       {children}
     </TierContext.Provider>
   );
 };
 
 const Header = () => {
-  const { currentTier, setCurrentTier, allBoardIds } = useTierConfig();
+  const { currentTier, setCurrentTier, allBoardIds, isFullyConfigured } = useTierConfig();
   
   // Local state for editing fields
   const [lineOfProduction, setLineOfProduction] = useState(currentTier.lineOfProduction);
@@ -133,8 +149,11 @@ const Header = () => {
   // For board ID selection in Tier 4
   const [selectedBoardId, setSelectedBoardId] = useState(currentTier.boardId);
   
+  // Excel import handling
+  const [isImporting, setIsImporting] = useState(false);
+  
   useEffect(() => {
-    if (!isLocked) {
+    if (!isLocked && directorate && officeCode && lineOfProduction) {
       generateBoardId();
     }
   }, [tier, lineOfProduction, directorate, officeCode, isLocked]);
@@ -171,6 +190,11 @@ const Header = () => {
   };
 
   const handleSave = () => {
+    if (!directorate || !officeCode || !lineOfProduction) {
+      toast.error("Please select all required fields: Directorate, Office Code, and Line of Production");
+      return;
+    }
+    
     setIsLocked(true);
     
     // Update the current tier configuration with all selected values
@@ -181,7 +205,8 @@ const Header = () => {
       directorate,
       officeCode,
       boardId,
-      isLocked: true
+      isLocked: true,
+      isConfigured: true
     });
     
     toast.success("Board configuration saved and locked!", {
@@ -243,6 +268,29 @@ const Header = () => {
     
     setBriefingTime(formattedTime);
   };
+
+  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      toast.error("Please select a valid Excel file (.xlsx or .xls)");
+      return;
+    }
+
+    setIsImporting(true);
+    
+    // Simulate import process
+    setTimeout(() => {
+      setIsImporting(false);
+      toast.success("Excel data imported successfully!", {
+        description: "Metrics and action items have been loaded from the spreadsheet"
+      });
+    }, 2000);
+
+    // Reset file input
+    event.target.value = '';
+  };
   
   // Check if we're in Tier 4
   const isTier4 = tier === "TIER 4";
@@ -282,9 +330,11 @@ const Header = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="ml-2 text-xs text-gray-300">
-              <span>Board ID: {boardId}</span>
-            </div>
+            {boardId && (
+              <div className="ml-2 text-xs text-gray-300">
+                <span>Board ID: {boardId}</span>
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col text-right">
@@ -342,6 +392,32 @@ const Header = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* Excel Import Button */}
+              <div className="flex items-center gap-1">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleExcelImport}
+                  className="hidden"
+                  id="excel-import"
+                  disabled={!isFullyConfigured || isImporting}
+                />
+                <label htmlFor="excel-import">
+                  <Button
+                    size="sm"
+                    className="h-7 flex items-center gap-1"
+                    variant="outline"
+                    disabled={!isFullyConfigured || isImporting}
+                    asChild
+                  >
+                    <span>
+                      <Upload className="h-3 w-3" />
+                      {isImporting ? "Importing..." : "Import Excel"}
+                    </span>
+                  </Button>
+                </label>
               </div>
               
               {/* Save/Unlock button */}

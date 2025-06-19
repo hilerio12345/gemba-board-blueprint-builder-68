@@ -237,29 +237,18 @@ const loadMetricsData = (): Record<string, Metric[]> => {
   const saved = localStorage.getItem('gembaMetricsData');
   if (saved) {
     const parsed = JSON.parse(saved);
-    // If today's data doesn't exist in saved data, add it
-    if (!parsed[todayKey]) {
-      parsed[todayKey] = getDefaultMetrics();
-      saveMetricsData(parsed);
-    }
     return parsed;
   }
-  // Initialize with today's data
-  saveMetricsData(initialMetricsData);
-  return initialMetricsData;
+  // Return empty data instead of initializing with default data
+  return {};
 };
 
 // Get metrics for a specific date
 export const getMetricsForDate = (dateKey: string): Metric[] => {
   const allData = loadMetricsData();
   
-  // If data for this date doesn't exist, create a new entry
-  if (!allData[dateKey]) {
-    allData[dateKey] = getDefaultMetrics();
-    saveMetricsData(allData);
-  }
-  
-  return allData[dateKey];
+  // Return empty array if no data exists for this date
+  return allData[dateKey] || [];
 };
 
 // Update metrics for a specific date
@@ -269,8 +258,27 @@ export const updateMetricsForDate = (dateKey: string, metrics: Metric[]): void =
   saveMetricsData(allData);
 };
 
+// Import metrics from external source
+export const importMetricsData = (metrics: Metric[], dateKey?: string): void => {
+  const targetDate = dateKey || getTodayKey();
+  const allData = loadMetricsData();
+  allData[targetDate] = metrics;
+  saveMetricsData(allData);
+};
+
+// Check if any data exists
+export const hasAnyData = (): boolean => {
+  const allData = loadMetricsData();
+  return Object.keys(allData).length > 0;
+};
+
 // Generate varying data for new dates to create history
 export const generateHistoricalDataIfNeeded = () => {
+  // Only generate historical data if we already have some data
+  if (!hasAnyData()) {
+    return;
+  }
+  
   const allData = loadMetricsData();
   const today = new Date();
   
