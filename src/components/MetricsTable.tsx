@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -16,10 +17,11 @@ import { updateMetricsForDate, getMetricsForDate, initializeDefaultData } from "
 
 const MetricsTable = () => {
   const { dateKey, currentDate } = useDateContext();
-  const { currentTier } = useTierConfig();
+  const { currentTier, isFullyConfigured } = useTierConfig();
   const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
   const [showDeptMetrics, setShowDeptMetrics] = useState(false);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const {
     metrics,
@@ -35,23 +37,36 @@ const MetricsTable = () => {
     toggleExpanded,
     getMetricColor,
     getDayAvailability,
-    getDayValue
+    getDayValue,
+    refreshMetrics
   } = useMetricsData(dateKey, viewMode, tierLevel);
+
+  // Initialize data when configuration is complete
+  useEffect(() => {
+    if (isFullyConfigured && !isInitialized) {
+      console.log("Initializing metrics data for fully configured board");
+      initializeDefaultData();
+      setIsInitialized(true);
+      // Trigger a refresh of the metrics hook
+      if (refreshMetrics) {
+        refreshMetrics();
+      }
+    }
+  }, [isFullyConfigured, isInitialized, refreshMetrics]);
 
   // Debug logging to check metrics loading
   useEffect(() => {
-    console.log("MetricsTable - Current metrics:", metrics);
+    console.log("MetricsTable - Current metrics:", metrics.length, "metrics");
     console.log("MetricsTable - View mode:", viewMode);
     console.log("MetricsTable - Date key:", dateKey);
+    console.log("MetricsTable - Is fully configured:", isFullyConfigured);
+    console.log("MetricsTable - Is initialized:", isInitialized);
     
-    // Ensure we have metrics data
-    if (metrics.length === 0) {
-      console.log("No metrics found, initializing default data");
-      initializeDefaultData();
-      // Force reload after initialization
-      window.location.reload();
+    if (metrics.length > 0) {
+      console.log("MetricsTable - Metrics categories:", metrics.map(m => m.category));
+      console.log("MetricsTable - Sample metric values:", metrics.map(m => ({ category: m.category, value: m.value })));
     }
-  }, [metrics, viewMode, dateKey]);
+  }, [metrics, viewMode, dateKey, isFullyConfigured, isInitialized]);
 
   // Handle delivery parameters update
   const handleDeliveryParametersUpdate = (updatedMetric: any) => {
@@ -59,13 +74,17 @@ const MetricsTable = () => {
       m.id === updatedMetric.id ? updatedMetric : m
     );
     updateMetricsForDate(dateKey, updatedMetrics);
-    window.location.reload(); // Refresh to show updates
+    if (refreshMetrics) {
+      refreshMetrics();
+    }
   };
 
   // Handle daily update
   const handleDailyUpdate = (updatedMetrics: any[]) => {
     updateMetricsForDate(dateKey, updatedMetrics);
-    window.location.reload(); // Refresh to show updates
+    if (refreshMetrics) {
+      refreshMetrics();
+    }
   };
 
   // Get delivery metric for parameters dialog
@@ -79,6 +98,21 @@ const MetricsTable = () => {
 
   if (missingMetrics.length > 0) {
     console.warn("Missing metrics:", missingMetrics);
+  }
+
+  // Don't render the table until configuration is complete
+  if (!isFullyConfigured) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-yellow-600" />
+          <span className="text-yellow-800 font-medium">Waiting for configuration...</span>
+        </div>
+        <p className="text-yellow-700 text-sm mt-1">
+          Please complete the Tier, Directorate, Office Code, and Line of Production selection.
+        </p>
+      </div>
+    );
   }
 
   // Function to generate department metrics data based on the images uploaded
@@ -187,7 +221,6 @@ const MetricsTable = () => {
             </thead>
             <tbody>
               {deptMetrics.map((dept) => {
-                // Determine background color based on fill rate
                 const getFillRateColor = (rate: number) => {
                   if (rate >= 90) return "bg-green-100 text-green-800";
                   if (rate >= 80) return "bg-yellow-100 text-yellow-800";
@@ -214,7 +247,6 @@ const MetricsTable = () => {
     );
   };
 
-  // Function to render the delivery metrics chart based on the second image
   const renderDeliveryMetricsChart = () => {
     if (tierLevel !== 4) return null;
     
@@ -261,7 +293,6 @@ const MetricsTable = () => {
     );
   };
 
-  // Function to render the cost metrics chart based on the third image
   const renderCostMetricsChart = () => {
     if (tierLevel !== 4) return null;
     
@@ -367,8 +398,13 @@ const MetricsTable = () => {
             <span className="text-yellow-800 font-medium">Loading metrics...</span>
           </div>
           <p className="text-yellow-700 text-sm mt-1">
-            If metrics don't appear, try refreshing the page or check the console for errors.
+            Initializing metrics data. This should only take a moment.
           </p>
+          {missingMetrics.length > 0 && (
+            <p className="text-red-600 text-sm mt-1">
+              Missing: {missingMetrics.join(', ')}
+            </p>
+          )}
         </div>
       )}
 

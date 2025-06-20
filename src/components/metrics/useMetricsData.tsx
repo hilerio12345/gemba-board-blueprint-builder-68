@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Metric } from "../../types/metrics";
 import { getMetricsForDate, updateMetricsForDate } from "../../services/metricsService";
 import { MetricParameter } from "../MetricParametersDialog";
@@ -9,8 +9,11 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const { toast } = useToast();
   
-  useEffect(() => {
+  // Function to refresh metrics from storage
+  const refreshMetrics = useCallback(() => {
+    console.log(`useMetricsData - Refreshing metrics for ${dateKey}`);
     let loadedMetrics = getMetricsForDate(dateKey);
+    console.log(`useMetricsData - Loaded ${loadedMetrics.length} base metrics`);
     
     if (tierLevel > 1) {
       loadedMetrics = loadedMetrics.map(metric => {
@@ -75,8 +78,17 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
       });
     }
     
+    console.log(`useMetricsData - Final metrics count: ${loadedMetrics.length}`);
+    if (loadedMetrics.length > 0) {
+      console.log(`useMetricsData - Metrics categories: ${loadedMetrics.map(m => m.category).join(', ')}`);
+    }
+    
     setMetrics(loadedMetrics);
   }, [dateKey, tierLevel]);
+  
+  useEffect(() => {
+    refreshMetrics();
+  }, [refreshMetrics]);
 
   const calculateStatusColor = (metric: Metric, value: number): string => {
     const parseThreshold = (threshold: string | undefined): number | null => {
@@ -538,6 +550,7 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     viewMode,
     getDayAvailability,
     getDayValue,
-    getMetricDayValue
+    getMetricDayValue,
+    refreshMetrics
   };
 };

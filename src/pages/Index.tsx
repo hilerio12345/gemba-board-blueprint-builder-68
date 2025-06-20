@@ -18,19 +18,13 @@ const GembaBoardContent = () => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
 
-  // Load metrics data when configuration is complete or date changes
+  // Generate historical data when configuration is complete
   useEffect(() => {
     if (isFullyConfigured) {
-      console.log("Loading metrics for date:", currentDate);
-      initializeDefaultData();
+      console.log("Index - Configuration complete, generating historical data");
       generateHistoricalDataIfNeeded();
-      
-      // Load metrics for current date
-      const loadedMetrics = getMetricsForDate(currentDate);
-      console.log("Loaded metrics:", loadedMetrics);
-      setMetrics(loadedMetrics);
     }
-  }, [isFullyConfigured, currentDate]);
+  }, [isFullyConfigured]);
 
   // Sample data for MetricsLineGraph
   const sampleGraphData = [
