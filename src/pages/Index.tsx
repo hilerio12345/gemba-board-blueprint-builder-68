@@ -7,8 +7,7 @@ import MetricsTable from "../components/MetricsTable";
 import ActionItemsLog from "../components/ActionItemsLog";
 import MetricsLineGraph from "../components/MetricsLineGraph";
 import ExportOptions from "../components/ExportOptions";
-import DailyUpdateDialog from "../components/metrics/DailyUpdateDialog";
-import { generateHistoricalDataIfNeeded, initializeDefaultData, getMetricsForDate, updateMetricsForDate } from "../services/metricsService";
+import { generateHistoricalDataIfNeeded, initializeDefaultData, getMetricsForDate } from "../services/metricsService";
 import { Card } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 import { Metric } from "../types/metrics";
@@ -32,13 +31,6 @@ const GembaBoardContent = () => {
       setMetrics(loadedMetrics);
     }
   }, [isFullyConfigured, currentDate]);
-
-  // Handle metrics update from daily dialog
-  const handleMetricsUpdate = (updatedMetrics: Metric[]) => {
-    console.log("Updating metrics:", updatedMetrics);
-    setMetrics(updatedMetrics);
-    updateMetricsForDate(currentDate, updatedMetrics);
-  };
 
   // Sample data for MetricsLineGraph
   const sampleGraphData = [
@@ -91,8 +83,8 @@ const GembaBoardContent = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Board Info and Daily Update */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+        {/* Board Info */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">
               {currentTier.tier} - {currentTier.lineOfProduction}
@@ -101,11 +93,6 @@ const GembaBoardContent = () => {
               Board ID: {currentTier.boardId} | Date: {new Date(currentDate).toLocaleDateString()}
             </p>
           </div>
-          <DailyUpdateDialog 
-            metrics={metrics}
-            onUpdate={handleMetricsUpdate}
-            currentDate={currentDate}
-          />
         </div>
 
         <MetricsTable />
