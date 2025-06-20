@@ -1,9 +1,6 @@
 
 import { Metric } from "../types/metrics";
 
-// Sample initial metrics data
-const initialMetricsData: Record<string, Metric[]> = {};
-
 // Get today's date key
 const getTodayKey = (): string => {
   const today = new Date();
@@ -251,16 +248,27 @@ const getDefaultMetrics = (): Metric[] => {
   });
 };
 
-// Use local storage to persist data
+// Use local storage to persist data with better error handling
 const saveMetricsData = (data: Record<string, Metric[]>) => {
-  localStorage.setItem('gembaMetricsData', JSON.stringify(data));
+  try {
+    const dataString = JSON.stringify(data);
+    localStorage.setItem('gembaMetricsData', dataString);
+    console.log("Metrics data saved successfully", Object.keys(data));
+  } catch (error) {
+    console.error("Failed to save metrics data:", error);
+  }
 };
 
 const loadMetricsData = (): Record<string, Metric[]> => {
-  const saved = localStorage.getItem('gembaMetricsData');
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    return parsed;
+  try {
+    const saved = localStorage.getItem('gembaMetricsData');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      console.log("Metrics data loaded successfully", Object.keys(parsed));
+      return parsed;
+    }
+  } catch (error) {
+    console.error("Failed to load metrics data:", error);
   }
   return {};
 };
@@ -268,11 +276,14 @@ const loadMetricsData = (): Record<string, Metric[]> => {
 // Get metrics for a specific date
 export const getMetricsForDate = (dateKey: string): Metric[] => {
   const allData = loadMetricsData();
-  return allData[dateKey] || [];
+  const metrics = allData[dateKey] || [];
+  console.log(`Getting metrics for ${dateKey}:`, metrics.length, "metrics found");
+  return metrics;
 };
 
 // Update metrics for a specific date
 export const updateMetricsForDate = (dateKey: string, metrics: Metric[]): void => {
+  console.log(`Updating metrics for ${dateKey}:`, metrics.length, "metrics");
   const allData = loadMetricsData();
   allData[dateKey] = metrics;
   saveMetricsData(allData);
@@ -284,6 +295,7 @@ export const importMetricsData = (metrics: Metric[], dateKey?: string): void => 
   const allData = loadMetricsData();
   allData[targetDate] = metrics;
   saveMetricsData(allData);
+  console.log(`Imported metrics for ${targetDate}`);
 };
 
 // Check if any data exists
@@ -298,8 +310,11 @@ export const initializeDefaultData = (): void => {
   const allData = loadMetricsData();
   
   if (!allData[todayKey]) {
+    console.log("Initializing default data for", todayKey);
     allData[todayKey] = getDefaultMetrics();
     saveMetricsData(allData);
+  } else {
+    console.log("Data already exists for", todayKey);
   }
 };
 
