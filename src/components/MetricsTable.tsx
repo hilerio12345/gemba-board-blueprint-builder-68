@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -7,13 +6,16 @@ import MetricsTableHeader from "./metrics/MetricsTableHeader";
 import MetricRow from "./metrics/MetricRow";
 import { useMetricsData } from "./metrics/useMetricsData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Calendar, FileChartLine } from "lucide-react";
+import { CalendarDays, Calendar, FileChartLine, Settings } from "lucide-react";
 import MonthlyView from "./metrics/MonthlyView";
 import { useTierConfig } from "./Header";
 import { Button } from "@/components/ui/button";
+import DeliveryParametersDialog from "./metrics/DeliveryParametersDialog";
+import DailyUpdateDialog from "./metrics/DailyUpdateDialog";
+import { updateMetricsForDate } from "../services/metricsService";
 
 const MetricsTable = () => {
-  const { dateKey } = useDateContext();
+  const { dateKey, currentDate } = useDateContext();
   const { currentTier } = useTierConfig();
   const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
   const [showDeptMetrics, setShowDeptMetrics] = useState(false);
@@ -35,6 +37,24 @@ const MetricsTable = () => {
     getDayAvailability,
     getDayValue
   } = useMetricsData(dateKey, viewMode, tierLevel);
+
+  // Handle delivery parameters update
+  const handleDeliveryParametersUpdate = (updatedMetric: any) => {
+    const updatedMetrics = metrics.map(m => 
+      m.id === updatedMetric.id ? updatedMetric : m
+    );
+    updateMetricsForDate(dateKey, updatedMetrics);
+    window.location.reload(); // Refresh to show updates
+  };
+
+  // Handle daily update
+  const handleDailyUpdate = (updatedMetrics: any[]) => {
+    updateMetricsForDate(dateKey, updatedMetrics);
+    window.location.reload(); // Refresh to show updates
+  };
+
+  // Get delivery metric for parameters dialog
+  const deliveryMetric = metrics.find(m => m.category === "DELIVERY");
 
   // Function to generate department metrics data based on the images uploaded
   const getDepartmentMetrics = () => {
@@ -276,6 +296,19 @@ const MetricsTable = () => {
         </Tabs>
         
         <div className="flex gap-2">
+          <DailyUpdateDialog
+            metrics={metrics}
+            onUpdate={handleDailyUpdate}
+            currentDate={currentDate.toISOString().split('T')[0]}
+          />
+
+          {deliveryMetric && (
+            <DeliveryParametersDialog
+              metric={deliveryMetric}
+              onUpdate={handleDeliveryParametersUpdate}
+            />
+          )}
+
           {tierLevel === 4 && (
             <Button
               variant="outline"

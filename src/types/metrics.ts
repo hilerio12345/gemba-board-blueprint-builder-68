@@ -1,4 +1,3 @@
-
 export interface Metric {
   id: string;
   category: string;
@@ -40,6 +39,40 @@ export interface Metric {
   officeCode?: string;
   boardId?: string;
   lineOfProduction?: string;
+  // New delivery parameters
+  deliveryParams?: {
+    targetPerWeek: number;
+    lostDeliveries: Array<{
+      day: string;
+      reason: string;
+      impact: string;
+      mitigationPlan: string;
+    }>;
+    cumulativeDeliveries: number;
+    weeklyTarget: number;
+    monthlyTarget: number;
+  };
+  // Quality parameters
+  qualityParams?: {
+    defectRate: number;
+    customerSatisfaction: number;
+    reworkRate: number;
+    testPassRate: number;
+  };
+  // Cost parameters
+  costParams?: {
+    budgetVariance: number;
+    overtimeHours: number;
+    resourceUtilization: number;
+    costPerDelivery: number;
+  };
+  // People parameters
+  peopleParams?: {
+    teamSatisfaction: number;
+    trainingCompliance: number;
+    attendanceRate: number;
+    turnoverRate: number;
+  };
 }
 
 export interface ActionItem {

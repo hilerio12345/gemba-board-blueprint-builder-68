@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DateProvider } from "../contexts/DateContext";
 import { TierProvider, useTierConfig } from "../components/Header";
 import Header from "../components/Header";
@@ -7,7 +7,7 @@ import MetricsTable from "../components/MetricsTable";
 import ActionItemsLog from "../components/ActionItemsLog";
 import MetricsLineGraph from "../components/MetricsLineGraph";
 import ExportOptions from "../components/ExportOptions";
-import { generateHistoricalDataIfNeeded } from "../services/metricsService";
+import { generateHistoricalDataIfNeeded, initializeDefaultData } from "../services/metricsService";
 import { Card } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 
@@ -15,12 +15,13 @@ const GembaBoardContent = () => {
   const { isFullyConfigured } = useTierConfig();
   const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
 
-  // Generate historical data on component mount
-  useState(() => {
+  // Initialize data when configuration is complete
+  useEffect(() => {
     if (isFullyConfigured) {
+      initializeDefaultData();
       generateHistoricalDataIfNeeded();
     }
-  });
+  }, [isFullyConfigured]);
 
   // Sample data for MetricsLineGraph
   const sampleGraphData = [
@@ -98,3 +99,4 @@ const Index = () => {
 };
 
 export default Index;
+

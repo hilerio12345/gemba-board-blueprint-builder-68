@@ -109,7 +109,7 @@ const calculateStatusColor = (metric: Metric, value: number): string => {
   return 'yellow';
 };
 
-// Default metrics for a new date
+// Default metrics for a new date with comprehensive delivery parameters
 const getDefaultMetrics = (): Metric[] => {
   const metrics = [
     {
@@ -133,19 +133,28 @@ const getDefaultMetrics = (): Metric[] => {
     {
       id: "2",
       category: "DELIVERY",
-      goal: "Goal: 4",
+      goal: "Goal: 4 DVs/week",
       value: 3,
       status: { monday: "green", tuesday: "green", wednesday: "green", thursday: "red", friday: "yellow" },
-      notes: "4 DVs/wk | 4 DVs | = 4 total",
+      notes: "Daily deliveries: Mon(1), Tue(1), Wed(0), Thu(0), Fri(1) | Lost delivery: Thu - system issue",
       greenThreshold: "≥ 4",
       yellowThreshold: "3",
       redThreshold: "< 3",
       dayValues: {
-        monday: 4,
-        tuesday: 4,
-        wednesday: 3,
-        thursday: 2,
-        friday: 3
+        monday: 1,
+        tuesday: 1,
+        wednesday: 0,
+        thursday: 0,
+        friday: 1
+      },
+      deliveryParams: {
+        targetPerWeek: 4,
+        lostDeliveries: [
+          { day: "thursday", reason: "System outage", impact: "High", mitigationPlan: "Backup system deployment" }
+        ],
+        cumulativeDeliveries: 3,
+        weeklyTarget: 4,
+        monthlyTarget: 16
       }
     },
     {
@@ -154,7 +163,7 @@ const getDefaultMetrics = (): Metric[] => {
       goal: "Goal: 75%",
       value: 78,
       status: { monday: "green", tuesday: "yellow", wednesday: "yellow", thursday: "green", friday: "green" },
-      notes: "3rd prty PV > Target",
+      notes: "3rd party PV > Target | Quality issues on Tue/Wed resolved",
       greenThreshold: "≥ 75%",
       yellowThreshold: "65-74%",
       redThreshold: "< 65%",
@@ -164,15 +173,21 @@ const getDefaultMetrics = (): Metric[] => {
         wednesday: 72,
         thursday: 82,
         friday: 78
+      },
+      qualityParams: {
+        defectRate: 2.1,
+        customerSatisfaction: 4.3,
+        reworkRate: 1.8,
+        testPassRate: 94.2
       }
     },
     {
       id: "4",
       category: "COST",
-      goal: "Goal: <5%",
+      goal: "Goal: <5% variance",
       value: 4.2,
       status: { monday: "yellow", tuesday: "green", wednesday: "green", thursday: "green", friday: "red" },
-      notes: "Overtime % above target on Friday",
+      notes: "Budget variance tracking | Overtime spike on Friday",
       greenThreshold: "< 5%",
       yellowThreshold: "5-7%",
       redThreshold: "> 7%",
@@ -182,15 +197,21 @@ const getDefaultMetrics = (): Metric[] => {
         wednesday: 3.8,
         thursday: 4.0,
         friday: 8.5
+      },
+      costParams: {
+        budgetVariance: 4.2,
+        overtimeHours: 12.5,
+        resourceUtilization: 87.3,
+        costPerDelivery: 1250
       }
     },
     {
       id: "5",
       category: "PEOPLE",
-      goal: "Goal: 95%",
+      goal: "Goal: 95% satisfaction",
       value: 92,
       status: { monday: "green", tuesday: "green", wednesday: "green", thursday: "green", friday: "yellow" },
-      notes: "Training compliance on track",
+      notes: "Training compliance on track | Team satisfaction survey completed",
       greenThreshold: "≥ 95%",
       yellowThreshold: "85-94%",
       redThreshold: "< 85%",
@@ -200,6 +221,12 @@ const getDefaultMetrics = (): Metric[] => {
         wednesday: 94,
         thursday: 94,
         friday: 90
+      },
+      peopleParams: {
+        teamSatisfaction: 92,
+        trainingCompliance: 94,
+        attendanceRate: 96.5,
+        turnoverRate: 2.1
       }
     },
   ];
@@ -224,10 +251,6 @@ const getDefaultMetrics = (): Metric[] => {
   });
 };
 
-// Initialize today's data if it doesn't exist
-const todayKey = getTodayKey();
-initialMetricsData[todayKey] = getDefaultMetrics();
-
 // Use local storage to persist data
 const saveMetricsData = (data: Record<string, Metric[]>) => {
   localStorage.setItem('gembaMetricsData', JSON.stringify(data));
@@ -239,15 +262,12 @@ const loadMetricsData = (): Record<string, Metric[]> => {
     const parsed = JSON.parse(saved);
     return parsed;
   }
-  // Return empty data instead of initializing with default data
   return {};
 };
 
 // Get metrics for a specific date
 export const getMetricsForDate = (dateKey: string): Metric[] => {
   const allData = loadMetricsData();
-  
-  // Return empty array if no data exists for this date
   return allData[dateKey] || [];
 };
 
@@ -272,9 +292,19 @@ export const hasAnyData = (): boolean => {
   return Object.keys(allData).length > 0;
 };
 
+// Initialize data for new users or when configuration is complete
+export const initializeDefaultData = (): void => {
+  const todayKey = getTodayKey();
+  const allData = loadMetricsData();
+  
+  if (!allData[todayKey]) {
+    allData[todayKey] = getDefaultMetrics();
+    saveMetricsData(allData);
+  }
+};
+
 // Generate varying data for new dates to create history
 export const generateHistoricalDataIfNeeded = () => {
-  // Only generate historical data if we already have some data
   if (!hasAnyData()) {
     return;
   }
@@ -288,19 +318,15 @@ export const generateHistoricalDataIfNeeded = () => {
     pastDate.setDate(today.getDate() - i);
     const pastDateKey = pastDate.toISOString().split('T')[0];
     
-    // Only generate if this date doesn't have data yet
     if (!allData[pastDateKey]) {
       const baseMetrics = getDefaultMetrics();
       
-      // Vary the metrics slightly to create historical differences
       const variedMetrics = baseMetrics.map(metric => {
-        // Random variation between -10% and +10% for values
         const variationFactor = 0.9 + Math.random() * 0.2;
         const newValue = typeof metric.value === 'number' 
           ? Math.round(metric.value * variationFactor * 10) / 10
           : metric.value;
           
-        // Generate day values for each metric
         const dayValues = {
           monday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
           tuesday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10,
@@ -309,7 +335,6 @@ export const generateHistoricalDataIfNeeded = () => {
           friday: Math.round(newValue * (0.95 + Math.random() * 0.1) * 10) / 10
         };
         
-        // Create the metric with day-specific values
         const updatedMetric = {
           ...metric,
           value: newValue,
@@ -318,7 +343,6 @@ export const generateHistoricalDataIfNeeded = () => {
           dayValues: metric.category !== "AVAILABILITY" ? dayValues : undefined
         };
         
-        // Calculate status colors based on values
         const days: (keyof Metric['status'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
         const updatedStatus = { ...updatedMetric.status };
         
@@ -342,3 +366,65 @@ export const generateHistoricalDataIfNeeded = () => {
   
   saveMetricsData(allData);
 };
+
+// Calculate weekly aggregates from daily data
+export const calculateWeeklyData = (startDate: string): Metric[] => {
+  const allData = loadMetricsData();
+  const weekDays = [];
+  const start = new Date(startDate);
+  
+  // Get all days in the week
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    weekDays.push(day.toISOString().split('T')[0]);
+  }
+  
+  // Aggregate daily data into weekly metrics
+  const weeklyMetrics = getDefaultMetrics().map(metric => {
+    const weekData = weekDays.map(day => allData[day]?.find(m => m.category === metric.category)).filter(Boolean);
+    
+    if (weekData.length === 0) return metric;
+    
+    // Calculate weekly averages and totals
+    const avgValue = weekData.reduce((sum, m) => sum + (m?.value || 0), 0) / weekData.length;
+    
+    return {
+      ...metric,
+      value: Math.round(avgValue * 10) / 10,
+      notes: `Weekly aggregate (${weekData.length} days of data)`
+    };
+  });
+  
+  return weeklyMetrics;
+};
+
+// Calculate monthly aggregates from weekly data
+export const calculateMonthlyData = (month: number, year: number): Metric[] => {
+  const allData = loadMetricsData();
+  const monthlyMetrics = getDefaultMetrics().map(metric => {
+    const monthData = [];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Collect all data for the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dayMetric = allData[dateKey]?.find(m => m.category === metric.category);
+      if (dayMetric) monthData.push(dayMetric);
+    }
+    
+    if (monthData.length === 0) return metric;
+    
+    // Calculate monthly averages
+    const avgValue = monthData.reduce((sum, m) => sum + (m?.value || 0), 0) / monthData.length;
+    
+    return {
+      ...metric,
+      value: Math.round(avgValue * 10) / 10,
+      notes: `Monthly aggregate (${monthData.length} days of data)`
+    };
+  });
+  
+  return monthlyMetrics;
+};
+
