@@ -1,0 +1,31 @@
+
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLiveSetup" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>GembaBoardSolution</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Gemba Board Lean Management System" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Complete Gemba Board solution for Lean Management System implementation" languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>GembaPublisher</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Gemba Board Publisher" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Publisher for Gemba Board Solutions" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress>admin@gembaboard.com</EMailAddress>
+      <SupportingWebsiteUrl>https://gembaboard.com</SupportingWebsiteUrl>
+      <CustomizationPrefix>gemba</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="60" schemaName="gemba_GembaBoard" behavior="0" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

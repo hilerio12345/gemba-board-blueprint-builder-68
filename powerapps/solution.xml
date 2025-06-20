@@ -1,0 +1,62 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLiveSetup" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>GembaBoardSolution</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Gemba Board Lean Management System" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Electronic Gemba Board for multi-tiered Lean Management System with metrics tracking and action item management" languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>GembaPublisher</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Gemba Board Publisher" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Publisher for Gemba Board Solutions" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress>admin@gembaboard.com</EMailAddress>
+      <SupportingWebsiteUrl>https://gembaboard.com</SupportingWebsiteUrl>
+      <CustomizationPrefix>gemba</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City>Lean City</City>
+          <County>Process</County>
+          <Country>USA</Country>
+          <Fax></Fax>
+          <FreightTermsCode>1</FreightTermsCode>
+          <ImportSequenceNumber></ImportSequenceNumber>
+          <Latitude></Latitude>
+          <Line1>123 Continuous Improvement Ave</Line1>
+          <Line2></Line2>
+          <Line3></Line3>
+          <Longitude></Longitude>
+          <Name>Gemba Board HQ</Name>
+          <PostalCode>12345</PostalCode>
+          <PostOfficeBox></PostOfficeBox>
+          <PrimaryContactName></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince>Excellence</StateOrProvince>
+          <Telephone1></Telephone1>
+          <Telephone2></Telephone2>
+          <Telephone3></Telephone3>
+          <TimeZoneRuleVersionNumber></TimeZoneRuleVersionNumber>
+          <UPSZone></UPSZone>
+          <UTCOffset></UTCOffset>
+          <UTCConversionTimeZoneCode></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="60" schemaName="gemba_GembaBoard" behavior="0" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

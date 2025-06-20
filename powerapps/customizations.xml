@@ -1,0 +1,37 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLiveSetup" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Entities />
+  <Roles />
+  <Workflows />
+  <FieldSecurityProfiles />
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <SolutionPluginAssemblies />
+  <EntityDataProviders />
+  <canvasapps>
+    <canvasapp>
+      <name>gemba_GembaBoard</name>
+      <displayname>Gemba Board</displayname>
+      <description>Electronic Gemba Board for multi-tiered Lean Management System</description>
+      <owner>admin</owner>
+      <backgroundcolor>RGBA(248, 249, 250, 1)</backgroundcolor>
+      <authorizationreferences>[]</authorizationreferences>
+      <connectionreferences>{}</connectionreferences>
+      <databasereferences>{}</databasereferences>
+      <appcomponents>[{"id":"00000000-0000-0000-0000-000000000000","name":"App","type":"App"}]</appcomponents>
+      <appcomponentdependencies>[]</appcomponentdependencies>
+      <createdtime>2025-01-15T10:00:00.000Z</createdtime>
+      <modifiedtime>2025-01-15T10:00:00.000Z</modifiedtime>
+      <publisher>GembaPublisher</publisher>
+      <version>2025011501</version>
+    </canvasapp>
+  </canvasapps>
+  <Languages>
+    <Language>1033</Language>
+  </Languages>
+</ImportExportXml>
