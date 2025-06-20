@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | 'monthly' = 'weekly', tierLevel: number = 1) => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
+  const [lastDateKey, setLastDateKey] = useState<string>(dateKey);
   const { toast } = useToast();
   
   // Function to refresh metrics from storage
@@ -86,9 +87,33 @@ export const useMetricsData = (dateKey: string, viewMode: 'daily' | 'weekly' | '
     setMetrics(loadedMetrics);
   }, [dateKey, tierLevel]);
   
+  // Refresh when date changes or on initial load
   useEffect(() => {
+    if (dateKey !== lastDateKey) {
+      console.log(`useMetricsData - Date changed from ${lastDateKey} to ${dateKey}, refreshing...`);
+      setLastDateKey(dateKey);
+    }
     refreshMetrics();
-  }, [refreshMetrics]);
+  }, [dateKey, lastDateKey, refreshMetrics]);
+
+  // Auto-refresh every 5 seconds when no metrics are found
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (metrics.length === 0) {
+      console.log("useMetricsData - No metrics found, setting up auto-refresh");
+      interval = setInterval(() => {
+        console.log("useMetricsData - Auto-refreshing due to missing metrics");
+        refreshMetrics();
+      }, 2000); // Check every 2 seconds
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [metrics.length, refreshMetrics]);
 
   const calculateStatusColor = (metric: Metric, value: number): string => {
     const parseThreshold = (threshold: string | undefined): number | null => {

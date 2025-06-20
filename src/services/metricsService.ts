@@ -1,4 +1,3 @@
-
 import { Metric } from "../types/metrics";
 
 // Get today's date key
@@ -309,31 +308,35 @@ export const initializeDefaultData = (): void => {
   const todayKey = getTodayKey();
   const allData = loadMetricsData();
   
-  if (!allData[todayKey]) {
-    console.log("Initializing default data for", todayKey);
-    allData[todayKey] = getDefaultMetrics();
-    saveMetricsData(allData);
-  } else {
-    console.log("Data already exists for", todayKey);
-  }
+  console.log("Initializing default data for", todayKey);
+  console.log("Current data keys:", Object.keys(allData));
+  
+  // Always create fresh data for today
+  const defaultMetrics = getDefaultMetrics();
+  allData[todayKey] = defaultMetrics;
+  saveMetricsData(allData);
+  
+  console.log("Default metrics initialized for", todayKey, "with", defaultMetrics.length, "metrics");
+  console.log("Metrics categories:", defaultMetrics.map(m => m.category));
 };
 
 // Generate varying data for new dates to create history
 export const generateHistoricalDataIfNeeded = () => {
-  if (!hasAnyData()) {
-    return;
-  }
-  
+  const todayKey = getTodayKey();
   const allData = loadMetricsData();
-  const today = new Date();
   
-  // Generate data for the past 30 days if it doesn't exist
-  for (let i = 1; i <= 30; i++) {
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - i);
-    const pastDateKey = pastDate.toISOString().split('T')[0];
+  // Only generate historical data if we don't have any data yet
+  if (Object.keys(allData).length === 0) {
+    console.log("Generating initial historical data");
     
-    if (!allData[pastDateKey]) {
+    const today = new Date();
+    
+    // Generate data for the past 30 days
+    for (let i = 1; i <= 30; i++) {
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - i);
+      const pastDateKey = pastDate.toISOString().split('T')[0];
+      
       const baseMetrics = getDefaultMetrics();
       
       const variedMetrics = baseMetrics.map(metric => {
@@ -377,9 +380,12 @@ export const generateHistoricalDataIfNeeded = () => {
       
       allData[pastDateKey] = variedMetrics as Metric[];
     }
+    
+    saveMetricsData(allData);
+    console.log("Historical data generation complete");
+  } else {
+    console.log("Historical data already exists, skipping generation");
   }
-  
-  saveMetricsData(allData);
 };
 
 // Calculate weekly aggregates from daily data
@@ -442,4 +448,3 @@ export const calculateMonthlyData = (month: number, year: number): Metric[] => {
   
   return monthlyMetrics;
 };
-

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
@@ -21,7 +20,8 @@ const MetricsTable = () => {
   const tierLevel = parseInt(currentTier.tier.split(' ')[1]);
   const [showDeptMetrics, setShowDeptMetrics] = useState(false);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initializationComplete, setInitializationComplete] = useState(false);
   
   const {
     metrics,
@@ -43,16 +43,44 @@ const MetricsTable = () => {
 
   // Initialize data when configuration is complete
   useEffect(() => {
-    if (isFullyConfigured && !isInitialized) {
-      console.log("Initializing metrics data for fully configured board");
-      initializeDefaultData();
-      setIsInitialized(true);
-      // Trigger a refresh of the metrics hook
-      if (refreshMetrics) {
-        refreshMetrics();
+    const performInitialization = async () => {
+      if (isFullyConfigured && !isInitializing && !initializationComplete) {
+        console.log("Starting metrics initialization for fully configured board");
+        setIsInitializing(true);
+        
+        try {
+          // Clear any existing data for today to start fresh
+          updateMetricsForDate(dateKey, []);
+          
+          // Initialize default data
+          initializeDefaultData();
+          
+          // Force refresh the metrics
+          setTimeout(() => {
+            console.log("Forcing metrics refresh after initialization");
+            if (refreshMetrics) {
+              refreshMetrics();
+            }
+            setInitializationComplete(true);
+            setIsInitializing(false);
+          }, 100);
+          
+        } catch (error) {
+          console.error("Error during initialization:", error);
+          setIsInitializing(false);
+        }
       }
-    }
-  }, [isFullyConfigured, isInitialized, refreshMetrics]);
+    };
+
+    performInitialization();
+  }, [isFullyConfigured, dateKey, refreshMetrics, isInitializing, initializationComplete]);
+
+  // Reset initialization state when configuration changes
+  useEffect(() => {
+    console.log("Configuration or date changed, resetting initialization state");
+    setInitializationComplete(false);
+    setIsInitializing(false);
+  }, [currentTier.boardId, dateKey]);
 
   // Debug logging to check metrics loading
   useEffect(() => {
@@ -60,13 +88,14 @@ const MetricsTable = () => {
     console.log("MetricsTable - View mode:", viewMode);
     console.log("MetricsTable - Date key:", dateKey);
     console.log("MetricsTable - Is fully configured:", isFullyConfigured);
-    console.log("MetricsTable - Is initialized:", isInitialized);
+    console.log("MetricsTable - Is initializing:", isInitializing);
+    console.log("MetricsTable - Initialization complete:", initializationComplete);
     
     if (metrics.length > 0) {
       console.log("MetricsTable - Metrics categories:", metrics.map(m => m.category));
       console.log("MetricsTable - Sample metric values:", metrics.map(m => ({ category: m.category, value: m.value })));
     }
-  }, [metrics, viewMode, dateKey, isFullyConfigured, isInitialized]);
+  }, [metrics, viewMode, dateKey, isFullyConfigured, isInitializing, initializationComplete]);
 
   // Handle delivery parameters update
   const handleDeliveryParametersUpdate = (updatedMetric: any) => {
@@ -110,6 +139,21 @@ const MetricsTable = () => {
         </div>
         <p className="text-yellow-700 text-sm mt-1">
           Please complete the Tier, Directorate, Office Code, and Line of Production selection.
+        </p>
+      </div>
+    );
+  }
+
+  // Show initialization status
+  if (isInitializing || (isFullyConfigured && metrics.length === 0 && !initializationComplete)) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 p-4 rounded-md">
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-blue-600 animate-spin" />
+          <span className="text-blue-800 font-medium">Initializing metrics...</span>
+        </div>
+        <p className="text-blue-700 text-sm mt-1">
+          Setting up your Gemba board metrics. This will only take a moment.
         </p>
       </div>
     );
@@ -389,24 +433,6 @@ const MetricsTable = () => {
           />
         </div>
       </div>
-
-      {/* Debug information */}
-      {metrics.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-yellow-600" />
-            <span className="text-yellow-800 font-medium">Loading metrics...</span>
-          </div>
-          <p className="text-yellow-700 text-sm mt-1">
-            Initializing metrics data. This should only take a moment.
-          </p>
-          {missingMetrics.length > 0 && (
-            <p className="text-red-600 text-sm mt-1">
-              Missing: {missingMetrics.join(', ')}
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Show metrics count for debugging */}
       <div className="mb-2 text-xs text-gray-500">
