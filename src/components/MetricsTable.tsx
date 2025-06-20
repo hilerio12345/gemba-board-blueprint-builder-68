@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import MetricParametersDialog from "./MetricParametersDialog";
 import { useDateContext } from "../contexts/DateContext";
@@ -12,7 +12,7 @@ import { useTierConfig } from "./Header";
 import { Button } from "@/components/ui/button";
 import DeliveryParametersDialog from "./metrics/DeliveryParametersDialog";
 import DailyUpdateDialog from "./metrics/DailyUpdateDialog";
-import { updateMetricsForDate } from "../services/metricsService";
+import { updateMetricsForDate, getMetricsForDate, initializeDefaultData } from "../services/metricsService";
 
 const MetricsTable = () => {
   const { dateKey, currentDate } = useDateContext();
@@ -38,6 +38,21 @@ const MetricsTable = () => {
     getDayValue
   } = useMetricsData(dateKey, viewMode, tierLevel);
 
+  // Debug logging to check metrics loading
+  useEffect(() => {
+    console.log("MetricsTable - Current metrics:", metrics);
+    console.log("MetricsTable - View mode:", viewMode);
+    console.log("MetricsTable - Date key:", dateKey);
+    
+    // Ensure we have metrics data
+    if (metrics.length === 0) {
+      console.log("No metrics found, initializing default data");
+      initializeDefaultData();
+      // Force reload after initialization
+      window.location.reload();
+    }
+  }, [metrics, viewMode, dateKey]);
+
   // Handle delivery parameters update
   const handleDeliveryParametersUpdate = (updatedMetric: any) => {
     const updatedMetrics = metrics.map(m => 
@@ -55,6 +70,16 @@ const MetricsTable = () => {
 
   // Get delivery metric for parameters dialog
   const deliveryMetric = metrics.find(m => m.category === "DELIVERY");
+
+  // Ensure we have all required metrics
+  const requiredMetrics = ["AVAILABILITY", "DELIVERY", "QUALITY", "COST", "PEOPLE"];
+  const missingMetrics = requiredMetrics.filter(category => 
+    !metrics.some(m => m.category === category)
+  );
+
+  if (missingMetrics.length > 0) {
+    console.warn("Missing metrics:", missingMetrics);
+  }
 
   // Function to generate department metrics data based on the images uploaded
   const getDepartmentMetrics = () => {
@@ -332,6 +357,29 @@ const MetricsTable = () => {
             onParametersUpdate={handleParametersUpdate}
           />
         </div>
+      </div>
+
+      {/* Debug information */}
+      {metrics.length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-yellow-600" />
+            <span className="text-yellow-800 font-medium">Loading metrics...</span>
+          </div>
+          <p className="text-yellow-700 text-sm mt-1">
+            If metrics don't appear, try refreshing the page or check the console for errors.
+          </p>
+        </div>
+      )}
+
+      {/* Show metrics count for debugging */}
+      <div className="mb-2 text-xs text-gray-500">
+        Showing {metrics.length} metrics in {viewMode} view
+        {metrics.length > 0 && (
+          <span className="ml-2">
+            Categories: {metrics.map(m => m.category).join(', ')}
+          </span>
+        )}
       </div>
 
       {viewMode === 'monthly' ? (
