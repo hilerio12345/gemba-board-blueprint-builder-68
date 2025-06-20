@@ -1,6 +1,40 @@
 
 # Gemba Board Power Apps Solution - Deployment Guide
 
+## ⚠️ CRITICAL: Avoiding Error 80048060
+
+**This error occurs when the ZIP file structure is incorrect. Follow these exact steps:**
+
+### Required Files at ZIP Root Level:
+1. `solution.xml` ← MUST be at root
+2. `customizations.xml` ← MUST be at root  
+3. `[Content_Types].xml` ← MUST be at root
+
+### Correct ZIP Creation Process:
+
+1. **Download all files from the powerapps folder**
+2. **Select ALL files** (not the folder itself)
+3. **Create ZIP ensuring the 3 XML files are at root level**
+
+### Verify Your ZIP Structure:
+When you open your ZIP file, you should see:
+```
+YourZipFile.zip
+├── solution.xml                    ← At root level
+├── customizations.xml              ← At root level  
+├── [Content_Types].xml             ← At root level
+├── CanvasManifest.json
+├── DEPLOYMENT_GUIDE.md
+├── PACKAGE_MANIFEST.md
+├── README.md
+├── Src/
+├── DataSources/
+├── Connections/
+├── Entropy/
+├── Other/
+└── pkgs/
+```
+
 ## Package Contents
 
 This solution package contains a complete Power Apps Canvas application for the Gemba Board Lean Management System.
@@ -128,36 +162,24 @@ The app comes pre-configured with sample data in collections. No additional setu
    - Validate business process alignment
    - Gather feedback for improvements
 
-## Customization Options
-
-### 1. Branding and Styling
-- Update colors in the app to match your organization's brand
-- Replace the logo image with your organization's logo
-- Modify text labels and terminology
-
-### 2. Metrics Categories
-- Add or remove metric categories in the global variables
-- Modify threshold values for red/yellow/green indicators
-- Customize goal values for each metric
-
-### 3. Additional Features
-- Add new screens for detailed reporting
-- Integrate with Power BI for advanced analytics
-- Connect to external systems via Power Automate
-
 ## Troubleshooting
 
 ### Common Import Issues
 
-1. **Missing Dependencies**
+1. **Error 80048060 - Invalid Solution File**
+   - Ensure solution.xml, customizations.xml, and [Content_Types].xml are at ZIP root
+   - Verify XML files are properly formatted
+   - Check that file names match exactly (including brackets in [Content_Types].xml)
+
+2. **Missing Dependencies**
    - Ensure all required connectors are available in your environment
    - Check if custom connectors need to be imported separately
 
-2. **Permission Errors**
+3. **Permission Errors**
    - Verify you have sufficient permissions in the target environment
    - Check with your Power Platform administrator
 
-3. **Version Compatibility**
+4. **Version Compatibility**
    - Ensure your Power Apps environment supports the app version
    - Update to the latest Power Apps version if needed
 

@@ -29,6 +29,8 @@
       <modifiedtime>2025-01-15T10:00:00.000Z</modifiedtime>
       <publisher>GembaPublisher</publisher>
       <version>2025011501</version>
+      <appversion>1.0.0.0</appversion>
+      <solutionid>GembaBoardSolution</solutionid>
     </canvasapp>
   </canvasapps>
   <Languages>

@@ -9,6 +9,16 @@
   <Default Extension="psm1" ContentType="text/plain" />
   <Default Extension="png" ContentType="image/png" />
   <Default Extension="md" ContentType="text/markdown" />
+  <Default Extension="editorstate" ContentType="application/json" />
   <Override PartName="/solution.xml" ContentType="application/xml" />
   <Override PartName="/customizations.xml" ContentType="application/xml" />
+  <Override PartName="/CanvasManifest.json" ContentType="application/json" />
+  <Override PartName="/Connections/Connections.json" ContentType="application/json" />
+  <Override PartName="/DataSources/Metrics.json" ContentType="application/json" />
+  <Override PartName="/DataSources/ActionItems.json" ContentType="application/json" />
+  <Override PartName="/Entropy/Entropy.json" ContentType="application/json" />
+  <Override PartName="/Entropy/AppCheckerResult.sarif" ContentType="application/json" />
+  <Override PartName="/Src/App.fx.yaml" ContentType="application/x-yaml" />
+  <Override PartName="/Src/MainScreen.fx.yaml" ContentType="application/x-yaml" />
+  <Override PartName="/Src/EditorState/Canvas.editorstate.json" ContentType="application/json" />
 </Types>
